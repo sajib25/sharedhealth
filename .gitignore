@@ -1,0 +1,29 @@
+#Vagrant dirs
+.vagrant/
+#Emacs
+*~
+#Gradle dirs
+.gradle/
+
+#Idea dirs
+.idea/
+*.iml
+*.ipr
+*.iws
+
+#Build dirs
+build/
+out/
+classes
+target
+node_modules
+
+#Logs
+nohup.out
+*.log*
+
+#OSX specific files
+.DS_Store
+
+#zip files
+*.zip

@@ -1,0 +1,187 @@
+apply plugin: 'java'
+apply plugin: 'spring-boot'
+apply plugin: 'war'
+apply plugin: 'rpm'
+apply plugin: 'idea'
+apply plugin: "nebula.os-package"
+
+mainClassName = "org.sharedhealth.healthId.web.launch.Main"
+
+repositories {
+    maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+    mavenCentral()
+    flatDir {
+        dirs "${rootDir}/lib"
+    }
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
+
+dependencies {
+    compile(libraries.spring_boot_web) {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+
+    compile(libraries.spring_boot_security) {
+    }
+    compile(libraries.spring_boot_actuator) {
+    }
+
+    compile libraries.spring_boot_logging, libraries.snappy, libraries.spring_context_support,
+            libraries.spring_data_cassandra, libraries.hibernate_validator,
+            libraries.apache_collections, libraries.apache_bean_utils, libraries.commons_codec,
+            libraries.commons_validator, libraries.spring_security,  libraries.joda_time
+
+    testCompile project(":schema")
+    testCompile(testLibraries.netty) {
+        force = 'true'
+    }
+    testCompile('org.cassandraunit:cassandra-unit-spring:2.0.2.2') {
+        exclude group: 'com.datastax.cassandra', module: 'cassandra-driver-core'
+    }
+    testCompile testLibraries.mockito, testLibraries.junit, testLibraries.spring_test, testLibraries.http_client, testLibraries.wiremock
+}
+
+test {
+    testLogging {
+        exceptionFormat "full" // default is "short"
+        events "passed", "skipped", "failed"
+    }
+
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+    }
+    minHeapSize = "512m"
+    maxHeapSize = "1024m"
+
+    jvmArgs '-XX:MaxPermSize=256m'
+
+}
+
+configurations {
+    all*.exclude group: 'ch.qos.logback', module: "logback-classic"
+    all*.exclude group: 'ch.qos.logback', module: "logback-core"
+    all*.exclude group: 'org.slf4j', module: "log4j-over-slf4j"
+    migration {
+        extendsFrom compile
+    }
+}
+
+jar {
+    baseName = 'healthId-api'
+    version = '0.1-SNAPSHOT'
+}
+
+private Properties loadConfig() {
+    Properties properties = new Properties()
+    properties.load(new FileInputStream(file("${projectDir}/../env/local.properties")));
+    properties
+}
+
+task assembly(dependsOn: 'build') << {
+    new File("${buildDir}/etc/").mkdir();
+}
+
+task exportProperties(dependsOn: 'assembly') << {
+    PrintStream output = new PrintStream(new FileOutputStream(file("${buildDir}/etc/healthId")));
+    Properties properties = loadConfig()
+    properties.each { prop, val ->
+        output.println("export " + prop + "=" + val)
+    }
+}
+
+//task dist(dependsOn: [project(":schema").tasks.build, 'exportProperties'], type: Rpm) {
+//    packageName = 'healthId'
+//    version = '0.1'
+//    release = project.hasProperty('release') ? project.release : '1'
+//    arch = NOARCH
+//    os = LINUX
+//
+//    into '/opt/healthId'
+//
+//    postInstall = file('scripts/utils/postInstall.sh')
+//    preUninstall = file('scripts/utils/preUninstall.sh')
+//    postUninstall = file('scripts/utils/postUninstall.sh')
+//
+//    from("${buildDir}/etc") {
+//        fileMode = 0755
+//        createDirectoryEntry = true
+//        into 'etc'
+//    }
+//
+//    from("scripts/rpm") {
+//        fileMode = 0755
+//        createDirectoryEntry = true
+//        exclude 'placeholder'
+//        into 'bin'
+//    }
+//
+//    from("${buildDir}/libs") {
+//        fileMode = 0755
+//        createDirectoryEntry = true
+//        into 'lib'
+//    }
+//
+//    from("scripts/rpm") {
+//        fileMode = 0755
+//        createDirectoryEntry = true
+//        exclude 'healthId'
+//        exclude 'start.sh'
+//        into 'var'
+//    }
+//
+//    from("${rootDir}/schema/scripts/rpm") {
+//        fileMode = 0755
+//        into 'bin'
+//    }
+//
+//    from("${rootDir}/schema/build/libs") {
+//        fileMode = 0755
+//        into 'lib'
+//    }
+//
+//}
+
+war {
+    from sourceSets.main.resources
+    manifest {
+        attributes('Main-Class': mainClassName)
+    }
+}
+
+task runhealthId(type: JavaExec) {
+    main = mainClassName
+    classpath sourceSets.main.runtimeClasspath
+    environment(loadConfig())
+}
+
+task debughealthId(type: JavaExec) {
+    main = mainClassName
+    classpath sourceSets.main.runtimeClasspath
+    environment(loadConfig())
+    debug = true
+}
+
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url "http://repo.spring.io/snapshot" }
+        maven { url "http://repo.spring.io/milestone" }
+        maven { url "https://plugins.gradle.org/m2/" }
+        jcenter()
+    }
+    dependencies {
+        classpath(
+                'org.springframework.boot:spring-boot-gradle-plugin:1.0.2.RELEASE',
+                'com.netflix.nebula:gradle-ospackage-plugin:2.2.+',
+                'net.saliman:gradle-cobertura-plugin:2.2.4'
+        )
+    }
+}
+

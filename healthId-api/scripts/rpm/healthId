@@ -1,0 +1,96 @@
+#!/bin/bash
+#
+# healthId        start/stop/status script
+#
+# chkconfig: - 64 36
+# description: The healthId shared health record system
+# processname: healthId
+# config: /etc/default/healthId
+# pidfile: /var/run/healthId/healthId.pid
+### BEGIN INIT INFO
+# Provides: healthId
+# Required-Start: $local_fs $remote_fs $network $named $syslog $time
+# Required-Stop: $local_fs $remote_fs $network $named $syslog $time
+# Short-Description: start and stop healthId system,
+# Description: BDSHR system
+### END INIT INFO
+
+export healthId_USER=sharedhealth
+export healthId_RUN=/opt/healthId/bin/start.sh
+export CUR_USER=`/usr/bin/whoami`
+
+# load configuration
+. /etc/default/healthId
+
+create_dirs() {
+    if [[ ! -e /var/run/healthId ]]; then
+        ln -s /opt/healthId/var /var/run/healthId
+    fi
+
+    if [[ ! -e /var/log/healthId ]]; then
+        mkdir /var/log/healthId
+    fi
+}
+healthId_pid() {
+        echo `ps -fe | grep 'healthId-api.war' | grep -v grep | tr -s " "|cut -d" " -f2`
+}
+
+start(){
+    pid=$(healthId_pid)
+    if [ -n "$pid" ];
+    then
+        echo -e "\e[00;31mService healthId is already running (pid: $pid)\e[00m"
+    else
+        # Start healthId
+        create_dirs
+        echo -e "\e[00;32mStarting healthId\e[00m"
+        if [ `user_exists $healthId_USER` = "1" ] && [ "$CUR_USER" != "$healthId_USER" ] ;
+        then
+                /bin/su $healthId_USER -c $healthId_RUN
+        else
+                sh $healthId_RUN
+        fi
+  fi
+  return 0
+}
+status(){
+          pid=$(healthId_pid)
+          if [ -n "$pid" ]; then echo -e "\e[00;32mService healthId is running with pid: $pid\e[00m"
+          else echo -e "\e[00;31mService healthId is not running\e[00m"
+          fi
+}
+
+stop() {
+	echo -e "\e[00;31mTerminating healthId\e[00m"
+	kill -9 $(healthId_pid)
+}
+user_exists(){
+        if id -u $1 >/dev/null 2>&1; then
+        echo "1"
+        else
+                echo "0"
+        fi
+}
+
+case $1 in
+	start)
+	  start
+	;;
+	stop)
+	  stop
+	;;
+	restart)
+	  stop
+	  start
+	;;
+	status)
+		status
+	;;
+	kill)
+		stop
+	;;
+	*)
+
+	;;
+esac
+exit 0
