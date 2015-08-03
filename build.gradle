@@ -17,8 +17,8 @@ subprojects {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '2.0'
+    task wrapper(type: Wrapper) {
+        gradleVersion = '2.0'
 }
 
 ext.libraries = [
@@ -39,6 +39,7 @@ ext.libraries = [
         joda_time            : "joda-time:joda-time:2.7",
         spring_security      : "org.springframework.security:spring-security-web:3.2.5.RELEASE",
         spring_boot_security : "org.springframework.boot:spring-boot-starter-security:1.1.8.RELEASE",
+        apache_lang          : "org.apache.commons:commons-lang3:3.3.2",
 ]
 
 ext.testLibraries = [

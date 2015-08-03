@@ -24,7 +24,7 @@ public class HealthIdRepository extends BaseRepository {
     private String lastTakenHidMarker;
 
     @Autowired
-    public HealthIdRepository(@Qualifier("MCICassandraTemplate") CassandraOperations cassandraOps) {
+    public HealthIdRepository(@Qualifier("HealthIdCassandraTemplate") CassandraOperations cassandraOps) {
         super(cassandraOps);
     }
 

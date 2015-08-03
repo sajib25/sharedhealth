@@ -17,7 +17,7 @@ import static org.sharedhealth.healthId.web.repository.RepositoryConstants.CF_GE
 public class GeneratedHidRangeRepository extends BaseRepository {
 
     @Autowired
-    public GeneratedHidRangeRepository(@Qualifier("MCICassandraTemplate") CassandraOperations cassandraOps) {
+    public GeneratedHidRangeRepository(@Qualifier("HealthIdCassandraTemplate") CassandraOperations cassandraOps) {
         super(cassandraOps);
     }
 

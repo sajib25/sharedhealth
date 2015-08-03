@@ -24,9 +24,8 @@ import static java.lang.System.getenv;
 @Import(WebMvcConfig.class)
 public class Main {
 
-    private static final String API_VERSION = "API_VERSION";
-    private static final String IS_LATEST_API_VERSION = "IS_LATEST_API_VERSION";
     public static final String HEALTH_ID_SERVICE_PORT = "HEALTH_ID_SERVICE_PORT";
+    private static final String PROFILE_DEFAULT = "default";
 
     @Bean
     public EmbeddedServletContainerFactory getFactory() {
@@ -36,44 +35,22 @@ public class Main {
             @Override
             public void onStartup(ServletContext servletContext) throws ServletException {
 
-                ServletRegistration.Dynamic mci = servletContext.addServlet("healthId", DispatcherServlet.class);
+                ServletRegistration.Dynamic healthId = servletContext.addServlet("healthId", DispatcherServlet.class);
 
-                List<String> servletMappings = getServletMappings(env);
-                mci.addMapping(servletMappings.toArray(new String[servletMappings.size()]));
-
-                mci.setInitParameter("contextClass", "org.springframework.web.context.support" +
+                healthId.addMapping("/*");
+                healthId.setInitParameter("contextClass", "org.springframework.web.context.support" +
                         ".AnnotationConfigWebApplicationContext");
-                mci.setAsyncSupported(true);
+                healthId.setAsyncSupported(true);
 
             }
         });
 
-        String mci_port = env.get(HEALTH_ID_SERVICE_PORT);
-        factory.setPort(valueOf(mci_port));
+        factory.setPort(valueOf(env.get(HEALTH_ID_SERVICE_PORT)));
         return factory;
-    }
-
-    private List<String> getServletMappings(Map<String, String> env) {
-        List<String> mappings = new ArrayList<>();
-        mappings.add(HealthIdConfig.DIAGNOSTICS_SERVLET_PATH);
-        mappings.addAll(getSupportedServletMappings(env.get(API_VERSION), Boolean.valueOf(env.get(IS_LATEST_API_VERSION))));
-        return mappings;
     }
 
     public static void main(String[] args) throws Exception {
         SpringApplication.run(Main.class, args);
     }
 
-    public static List<String> getSupportedServletMappings(String apiVersion, boolean isLatestApiVersion) {
-        List<String> mappings = new ArrayList<>();
-
-        mappings.add(format("/api/%s/*", apiVersion));
-
-        if (isLatestApiVersion) {
-            mappings.add(format("/api/%s/*", "default"));
-            mappings.add("/api/*");
-        }
-
-        return mappings;
-    }
 }

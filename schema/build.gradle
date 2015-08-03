@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'idea'
 
 repositories {
     mavenCentral()
@@ -28,7 +29,7 @@ jar {
 
 dependencies {
     compile libraries.mutagen, libraries.mutagen_cassandra
-    compile libraries.spring_data_cassandra,libraries.lz4,libraries.snappy
+    compile libraries.spring_data_cassandra,libraries.lz4,libraries.snappy, libraries.apache_lang
     testCompile group: 'junit', name: 'junit', version: '4.11'
 }
 

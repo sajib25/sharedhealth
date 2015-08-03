@@ -28,15 +28,15 @@ public class Migrations {
     }
 
     public void migrate() throws IOException {
-        String freeSHRKeyspace = env.get("CASSANDRA_KEYSPACE");
+        String keyspace = env.get("CASSANDRA_KEYSPACE");
         Cluster cluster = connectKeyspace();
         Session session = createSession(cluster);
-        CassandraMutagen mutagen = new CassandraMutagenImpl(freeSHRKeyspace);
+        CassandraMutagen mutagen = new CassandraMutagenImpl(keyspace);
 
         try {
             mutagen.initialize(env.get("CASSANDRA_MIGRATIONS_PATH"));
             com.toddfast.mutagen.Plan.Result<Integer> result = mutagen.mutate(new CassandraSubject(session,
-                    freeSHRKeyspace));
+                    keyspace));
 
             if (result.getException() != null) {
                 throw new RuntimeException(result.getException());

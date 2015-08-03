@@ -22,7 +22,8 @@ import java.util.concurrent.Executors;
 @EnableWebMvc
 @EnableScheduling
 @ComponentScan(basePackages = {
-        "org.sharedhealth.mci.web.config"
+        "org.sharedhealth.healthId.web"
+
 })
 public class WebMvcConfig extends WebMvcConfigurerAdapter implements SchedulingConfigurer {
 

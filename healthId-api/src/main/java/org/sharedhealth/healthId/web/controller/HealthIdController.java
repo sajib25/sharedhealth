@@ -2,7 +2,7 @@ package org.sharedhealth.healthId.web.controller;
 
 import org.sharedhealth.healthId.web.Model.GeneratedHidRange;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
-import org.sharedhealth.healthId.web.config.MCIProperties;
+import org.sharedhealth.healthId.web.config.HealthIdProperties;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.sharedhealth.healthId.web.service.GeneratedHidRangeService;
 import org.sharedhealth.healthId.web.service.HealthIdService;
@@ -22,16 +22,16 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
-@RequestMapping("/healthIds")
+@RequestMapping("/healthId")
 public class HealthIdController extends BaseController {
     private static final Logger logger = LoggerFactory.getLogger(HealthIdController.class);
 
     private HealthIdService healthIdService;
     private GeneratedHidRangeService generatedHidRangeService;
-    private MCIProperties properties;
+    private HealthIdProperties properties;
 
     @Autowired
-    public HealthIdController(HealthIdService healthIdService, GeneratedHidRangeService generatedHidRangeService, MCIProperties properties) {
+    public HealthIdController(HealthIdService healthIdService, GeneratedHidRangeService generatedHidRangeService, HealthIdProperties properties) {
         this.healthIdService = healthIdService;
         this.generatedHidRangeService = generatedHidRangeService;
         this.properties = properties;

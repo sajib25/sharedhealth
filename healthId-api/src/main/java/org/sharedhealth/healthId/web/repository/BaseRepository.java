@@ -12,7 +12,7 @@ public class BaseRepository {
     protected static int MAXIMUM_RECORD = 25;
     protected CassandraOperations cassandraOps;
 
-    public BaseRepository(@Qualifier("MCICassandraTemplate") CassandraOperations cassandraOps) {
+    public BaseRepository(@Qualifier("HealthIdCassandraTemplate") CassandraOperations cassandraOps) {
         this.cassandraOps = cassandraOps;
     }
 
