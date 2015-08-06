@@ -138,6 +138,7 @@ task dist(dependsOn: [project(":schema").tasks.build, 'exportProperties'], type:
 
     from("${rootDir}/schema/scripts/rpm") {
         fileMode  0755
+        exclude 'placeholder'
         into 'bin'
     }
 
