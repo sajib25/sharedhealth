@@ -78,17 +78,6 @@ public class Migrations {
 
     protected Session createSession(Cluster cluster) {
         String keyspace = env.get("CASSANDRA_KEYSPACE");
-        String replicationStrategy = env.get("CASSANDRA_REPLICATION_STRATEGY");
-        String replicationFactor = env.get("CASSANDRA_REPLICATION_FACTOR");
-
-        Session session = cluster.connect();
-        session.execute(
-                String.format(
-                        "CREATE KEYSPACE IF NOT EXISTS %s " +
-                                "WITH replication = {'class':'%s', 'replication_factor':%s}; ",
-                        keyspace, replicationStrategy, replicationFactor)
-        );
-        session.close();
         return cluster.connect(keyspace);
     }
 
