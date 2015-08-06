@@ -73,6 +73,7 @@ configurations {
     }
 }
 
+
 jar {
     baseName = 'healthId-api'
     version = '0.2-SNAPSHOT'
