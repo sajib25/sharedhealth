@@ -1,0 +1,79 @@
+package org.sharedhealth.healthId.web.repository;
+
+import com.datastax.driver.core.querybuilder.Insert;
+import com.datastax.driver.core.querybuilder.Select;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Mock;
+import org.mockito.runners.MockitoJUnitRunner;
+import org.sharedhealth.healthId.web.Model.MciHealthId;
+import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
+import org.springframework.data.cassandra.convert.MappingCassandraConverter;
+import org.springframework.data.cassandra.core.CassandraOperations;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.MockitoAnnotations.initMocks;
+
+@RunWith(MockitoJUnitRunner.class)
+public class MCIHealthIdRepositoryTest {
+    @Mock
+    CassandraOperations cqlTemplate;
+
+    @Before
+    public void setUp() throws Exception {
+        initMocks(this);
+        when(cqlTemplate.getConverter()).thenReturn(new MappingCassandraConverter());
+    }
+
+    @Test
+    public void shouldSaveHidAsynchronously() {
+        HealthIdRepository healthIdRepository = new HealthIdRepository(cqlTemplate);
+        healthIdRepository.saveHealthId(new MciHealthId("98015440161"));
+        verify(cqlTemplate, times(1)).executeAsynchronously(any(Insert.class));
+    }
+
+    @Test
+    public void shouldBlockIdsForMCIService() {
+        ArrayList<MciHealthId> result = new ArrayList<>();
+        result.add(new MciHealthId("898998"));
+        result.add(new MciHealthId("898999"));
+        when(cqlTemplate.select(any(Select.class), eq(MciHealthId.class))).thenReturn(result);
+        HealthIdRepository healthIdRepository = new HealthIdRepository(cqlTemplate);
+
+        List<MciHealthId> nextBlock = healthIdRepository.getNextBlock();
+
+        ArgumentCaptor<Select> selectArgumentCaptor = ArgumentCaptor.forClass(Select.class);
+        ArgumentCaptor<Class> classArgumentCaptor = ArgumentCaptor.forClass(Class.class);
+        assertEquals(2, nextBlock.size());
+        verify(cqlTemplate, times(1)).select(selectArgumentCaptor.capture(), classArgumentCaptor.capture());
+        assertFalse(selectArgumentCaptor.getValue().toString().contains("token"));
+        assertEquals("898999", healthIdRepository.getLastTakenHidMarker());
+
+        healthIdRepository.getNextBlock();
+
+        selectArgumentCaptor = ArgumentCaptor.forClass(Select.class);
+        classArgumentCaptor = ArgumentCaptor.forClass(Class.class);
+        assertEquals(2, nextBlock.size());
+        verify(cqlTemplate, times(2)).select(selectArgumentCaptor.capture(), classArgumentCaptor.capture());
+        assertTrue(selectArgumentCaptor.getValue().toString().contains("token"));
+    }
+
+    @Test(expected = HealthIdExhaustedException.class)
+    public void exceptionResponseWhenIdsAReExhausted() {
+        when(cqlTemplate.select(any(Select.class), eq(String.class))).thenReturn(new ArrayList<String>());
+        HealthIdRepository healthIdRepository = new HealthIdRepository(cqlTemplate);
+        healthIdRepository.getNextBlock();
+    }
+}

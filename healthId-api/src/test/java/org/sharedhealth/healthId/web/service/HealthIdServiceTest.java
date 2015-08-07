@@ -27,7 +27,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(MockitoJUnitRunner.class)
-public class MCIHealthIdServiceTest {
+public class HealthIdServiceTest {
 
     HealthIdProperties properties;
 

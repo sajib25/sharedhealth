@@ -12,7 +12,7 @@ import static org.apache.commons.validator.routines.checkdigit.LuhnCheckDigit.LU
 import static org.slf4j.LoggerFactory.getLogger;
 
 @Component
-@Qualifier("MciChecksumGenerator")
+@Qualifier("ChecksumGenerator")
 public class LuhnChecksumGenerator implements ChecksumGenerator {
 
     private static final Logger logger = getLogger(LuhnChecksumGenerator.class);
