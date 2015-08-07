@@ -7,7 +7,7 @@ import com.datastax.driver.core.QueryOptions;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
-import org.sharedhealth.healthid.cassandra.Migrations;
+import org.sharedhealth.healthId.cassandra.Migrations;
 
 import java.util.Map;
 

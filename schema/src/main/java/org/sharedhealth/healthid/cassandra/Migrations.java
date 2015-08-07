@@ -1,7 +1,12 @@
-package org.sharedhealth.healthid.cassandra;
+package org.sharedhealth.healthId.cassandra;
 
 
-import com.datastax.driver.core.*;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ConsistencyLevel;
+import com.datastax.driver.core.PlainTextAuthProvider;
+import com.datastax.driver.core.PoolingOptions;
+import com.datastax.driver.core.QueryOptions;
+import com.datastax.driver.core.Session;
 import com.datastax.driver.core.policies.ConstantReconnectionPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 import com.toddfast.mutagen.cassandra.CassandraMutagen;
@@ -85,3 +90,4 @@ public class Migrations {
         new Migrations().migrate();
     }
 }
+
