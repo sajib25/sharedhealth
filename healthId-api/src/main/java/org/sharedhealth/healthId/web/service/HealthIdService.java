@@ -3,7 +3,7 @@ package org.sharedhealth.healthId.web.service;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
 import org.sharedhealth.healthId.web.config.HealthIdProperties;
 import org.sharedhealth.healthId.web.repository.HealthIdRepository;
-import org.sharedhealth.healthId.web.util.LuhnChecksumGenerator;
+import org.sharedhealth.healthId.web.utils.LuhnChecksumGenerator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 

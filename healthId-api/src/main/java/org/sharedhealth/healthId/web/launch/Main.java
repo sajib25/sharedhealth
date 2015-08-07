@@ -1,6 +1,5 @@
 package org.sharedhealth.healthId.web.launch;
 
-import org.sharedhealth.healthId.web.config.HealthIdConfig;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.context.embedded.EmbeddedServletContainerFactory;
 import org.springframework.boot.context.embedded.ServletContextInitializer;
@@ -12,12 +11,9 @@ import org.springframework.web.servlet.DispatcherServlet;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRegistration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 import static java.lang.Integer.valueOf;
-import static java.lang.String.format;
 import static java.lang.System.getenv;
 
 

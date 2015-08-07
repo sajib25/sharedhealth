@@ -1,8 +1,12 @@
 package org.sharedhealth.healthId.web.launch;
 
+import org.sharedhealth.healthId.web.config.ActuatorConfig;
+import org.sharedhealth.healthId.web.config.HealthIdConfig;
+import org.sharedhealth.healthId.web.config.HealthIdSecurityConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -19,11 +23,19 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 @Configuration
+@Import({HealthIdConfig.class, HealthIdSecurityConfig.class, ActuatorConfig.class})
 @EnableWebMvc
 @EnableScheduling
 @ComponentScan(basePackages = {
-        "org.sharedhealth.healthId.web"
-
+        "org.sharedhealth.healthId.web.config",
+        "org.sharedhealth.healthId.web.controller",
+        "org.sharedhealth.healthId.web.exception",
+        "org.sharedhealth.healthId.web.launch",
+        "org.sharedhealth.healthId.web.model",
+        "org.sharedhealth.healthId.web.repository",
+        "org.sharedhealth.healthId.web.security",
+        "org.sharedhealth.healthId.web.service",
+        "org.sharedhealth.healthId.web.utils"
 })
 public class WebMvcConfig extends WebMvcConfigurerAdapter implements SchedulingConfigurer {
 

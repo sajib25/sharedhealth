@@ -1,4 +1,4 @@
-package org.sharedhealth.healthId.web.util;
+package org.sharedhealth.healthId.web.utils;
 
 import org.apache.commons.validator.routines.checkdigit.CheckDigitException;
 import org.sharedhealth.healthId.web.exception.HidGenerationException;

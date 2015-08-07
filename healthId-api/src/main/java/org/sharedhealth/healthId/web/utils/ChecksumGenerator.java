@@ -1,4 +1,4 @@
-package org.sharedhealth.healthId.web.util;
+package org.sharedhealth.healthId.web.utils;
 
 public interface ChecksumGenerator {
 
