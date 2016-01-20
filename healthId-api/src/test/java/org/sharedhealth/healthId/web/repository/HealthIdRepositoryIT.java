@@ -4,8 +4,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
 import org.sharedhealth.healthId.web.Model.MciHealthId;
+import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.config.EnvironmentMock;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.healthId.web.launch.WebMvcConfig;
@@ -20,9 +20,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static java.util.Arrays.asList;
+import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
@@ -51,7 +51,7 @@ public class HealthIdRepositoryIT {
     private List<MciHealthId> createHealthIds(long prefix) {
         List<MciHealthId> MciHealthIds = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
-            MciHealthIds.add(healthIdRepository.saveHealthIdSync(new MciHealthId(String.valueOf(prefix + i))));
+            MciHealthIds.add(healthIdRepository.saveMciHealthIdSync(new MciHealthId(String.valueOf(prefix + i))));
         }
         return MciHealthIds;
     }
@@ -99,6 +99,27 @@ public class HealthIdRepositoryIT {
         for (MciHealthId MciHealthId : nextBlock) {
             assertFalse(MciHealthIds.contains(MciHealthId));
         }
+    }
+
+    @Test
+    public void shouldSaveAHIDForGivenOrganization() throws Exception {
+        OrgHealthId orgHealthId = new OrgHealthId("9110", "OTHER-ORG", null);
+
+        healthIdRepository.saveOrgHealthIdSync(orgHealthId);
+
+        String select = select().all().from(RepositoryConstants.CF_ORG_HEALTH_ID).toString();
+        List<OrgHealthId> insertedHIDs = cqlTemplate.select(select, OrgHealthId.class);
+        assertEquals(1, insertedHIDs.size());
+        assertEquals(orgHealthId, insertedHIDs.get(0));
+    }
+
+    @Test
+    public void shouldFindOrgHIDByGivenHID() throws Exception {
+        OrgHealthId hid = new OrgHealthId("1234", "XYZ", null);
+        cqlTemplate.insert(asList(hid, new OrgHealthId("1134", "ABC", null)));
+
+        OrgHealthId orgHealthId = healthIdRepository.findOrgHealthId("1234");
+        assertEquals(hid, orgHealthId);
     }
 }
 

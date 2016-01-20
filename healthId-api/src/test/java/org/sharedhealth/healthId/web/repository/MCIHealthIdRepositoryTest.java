@@ -9,6 +9,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
+import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.springframework.data.cassandra.convert.MappingCassandraConverter;
 import org.springframework.data.cassandra.core.CassandraOperations;
@@ -16,14 +17,10 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -38,9 +35,9 @@ public class MCIHealthIdRepositoryTest {
     }
 
     @Test
-    public void shouldSaveHidAsynchronously() {
+    public void shouldSaveMCIHidAsynchronously() {
         HealthIdRepository healthIdRepository = new HealthIdRepository(cqlTemplate);
-        healthIdRepository.saveHealthId(new MciHealthId("98015440161"));
+        healthIdRepository.saveMciHealthId(new MciHealthId("98015440161"));
         verify(cqlTemplate, times(1)).executeAsynchronously(any(Insert.class));
     }
 
@@ -68,6 +65,13 @@ public class MCIHealthIdRepositoryTest {
         assertEquals(2, nextBlock.size());
         verify(cqlTemplate, times(2)).select(selectArgumentCaptor.capture(), classArgumentCaptor.capture());
         assertTrue(selectArgumentCaptor.getValue().toString().contains("token"));
+    }
+
+    @Test
+    public void shouldSaveOrgHidAsynchronously() {
+        HealthIdRepository healthIdRepository = new HealthIdRepository(cqlTemplate);
+        healthIdRepository.saveOrgHealthId(new OrgHealthId("98015440161", "other-org", null));
+        verify(cqlTemplate, times(1)).executeAsynchronously(any(Insert.class));
     }
 
     @Test(expected = HealthIdExhaustedException.class)

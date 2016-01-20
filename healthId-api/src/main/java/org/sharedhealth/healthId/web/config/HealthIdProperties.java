@@ -39,11 +39,16 @@ public class HealthIdProperties {
     @Value("${IDP_AUTH_TOKEN}")
     private String idpAuthToken;
 
-    @Value("${INVALID_HID_PATTERN}")
-    private String invalidHidPattern;
+    @Value("${MCI_INVALID_HID_PATTERN}")
+    private String mciInvalidHidPattern;
+    @Value("${ORG_INVALID_HID_PATTERN}")
+    private String orgInvalidHidPattern;
+    @Value("${HID_STORAGE_PATH}")
+    private String hidStoragePath;
+
+
     @Value("${MCI_START_HID}")
     private String mciStartHid;
-
     @Value("${MCI_END_HID}")
     private String mciEndHid;
 
@@ -92,8 +97,8 @@ public class HealthIdProperties {
         return cassandraPassword;
     }
 
-    public String getInvalidHidPattern() {
-        return invalidHidPattern;
+    public String getMciInvalidHidPattern() {
+        return mciInvalidHidPattern;
     }
 
     public Long getMciEndHid() {
@@ -104,8 +109,8 @@ public class HealthIdProperties {
         return Long.valueOf(mciStartHid);
     }
 
-    public void setInvalidHidPattern(String invalidHidPattern) {
-        this.invalidHidPattern = invalidHidPattern;
+    public void setMciInvalidHidPattern(String mciInvalidHidPattern) {
+        this.mciInvalidHidPattern = mciInvalidHidPattern;
     }
 
     public void setMciStartHid(String mciStartHid) {
@@ -131,4 +136,23 @@ public class HealthIdProperties {
     public void setHealthIdBlockSize(String healthIdBlockSize) {
         this.healthIdBlockSize = healthIdBlockSize;
     }
+
+
+    public String getOrgInvalidHidPattern() {
+        return orgInvalidHidPattern;
+    }
+
+    public void setOrgInvalidHidPattern(String orgInvalidHidPattern) {
+        this.orgInvalidHidPattern = orgInvalidHidPattern;
+    }
+
+    public String getHidStoragePath() {
+        return hidStoragePath;
+    }
+
+    public void setHidStoragePath(String hidStoragePath) {
+        this.hidStoragePath = hidStoragePath;
+    }
+
+
 }

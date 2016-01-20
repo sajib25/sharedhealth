@@ -5,13 +5,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
-
-import org.sharedhealth.healthId.web.Model.GeneratedHidRange;
+import org.sharedhealth.healthId.web.Model.GeneratedHIDBlock;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
-import org.sharedhealth.healthId.web.config.HealthIdProperties;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.sharedhealth.healthId.web.security.UserProfile;
-import org.sharedhealth.healthId.web.service.GeneratedHidRangeService;
 import org.sharedhealth.healthId.web.service.HealthIdService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -20,31 +17,20 @@ import java.util.ArrayList;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 @RunWith(MockitoJUnitRunner.class)
 public class HealthIdControllerTest {
     @Mock
-    HealthIdService healthIdService;
+    private HealthIdService healthIdService;
 
-    @Mock
-    GeneratedHidRangeService generatedHidRangeService;
-
-    HealthIdProperties properties;
 
     @Before
     public void setUp() throws Exception {
         initMocks(this);
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(getUserInfo(), null));
-        properties = new HealthIdProperties();
-        properties.setInvalidHidPattern("^[^9]|^.[^89]|(^\\d{0,9}$)|(^\\d{11,}$)|((\\d)\\4{2})\\d*((\\d)\\6{2})|(\\d)\\7{3}");
-        properties.setMciStartHid("9800000000");
-        properties.setMciEndHid("9999999999");
-
     }
 
     private UserInfo getUserInfo() {
@@ -56,17 +42,17 @@ public class HealthIdControllerTest {
 
     @Test
     public void testGenerate() {
-        long start = properties.getMciStartHid(), end = properties.getMciEndHid();
-        when(healthIdService.generate(start, end)).thenReturn(100L);
-        HealthIdController healthIdController = new HealthIdController(healthIdService, generatedHidRangeService, properties);
-        assertEquals("GENERATED 100 Ids", healthIdController.generate().getResult());
-        verify(healthIdService, times(1)).generate(start, end);
+        GeneratedHIDBlock hidBlock = new GeneratedHIDBlock(1000L, "MCI", 1000L, 1099L, 100L, "");
+        when(healthIdService.generateAll(any(UserInfo.class))).thenReturn(hidBlock);
+        HealthIdController healthIdController = new HealthIdController(healthIdService);
+        assertEquals("Generated 100 HIDs.", healthIdController.generate().getResult());
+        verify(healthIdService, times(1)).generateAll(any(UserInfo.class));
     }
 
     @Test
     public void testGetNextBlock() {
         when(healthIdService.getNextBlock()).thenReturn(getNextBlock());
-        HealthIdController healthIdController = new HealthIdController(healthIdService, generatedHidRangeService, properties);
+        HealthIdController healthIdController = new HealthIdController(healthIdService);
         assertEquals(3, healthIdController.nextBlock().size());
         verify(healthIdService, times(1)).getNextBlock();
     }
@@ -81,24 +67,31 @@ public class HealthIdControllerTest {
 
     @Test
     public void testGenerateRange() {
-        long start = 9800100100L, end = 9800100200L;
-        when(healthIdService.generate(start, end)).thenReturn(100L);
-        HealthIdController healthIdController = new HealthIdController(healthIdService, generatedHidRangeService, properties);
-        assertEquals("GENERATED 100 Ids", healthIdController.generateRange(start, end).getResult());
-        verify(healthIdService, times(1)).generate(start, end);
+        long start = 1000L, total = 100L;
+        GeneratedHIDBlock hidBlock = new GeneratedHIDBlock(1000L, "MCI", 1000L, 1099L, 100L, "");
+        when(healthIdService.generateBlock(eq(start), eq(total), any(UserInfo.class))).thenReturn(hidBlock);
+        HealthIdController healthIdController = new HealthIdController(healthIdService);
+        assertEquals("Generated 100 HIDs.", healthIdController.generateBlock(start, total).getResult());
+        verify(healthIdService, times(1)).generateBlock(eq(start), eq(total), any(UserInfo.class));
     }
 
     @Test
-    public void shouldNotGenerateOverlappingHids() throws Exception {
-        long start = 9800100100L, end = 9800100200L;
-        when(healthIdService.generate(start, end)).thenReturn(100L);
-        HealthIdController healthIdController = new HealthIdController(healthIdService, generatedHidRangeService, properties);
-        assertEquals("GENERATED 100 Ids", healthIdController.generateRange(start, end).getResult());
-        verify(healthIdService, times(1)).generate(start, end);
-        when(generatedHidRangeService.getPreGeneratedHidRanges()).thenReturn(asList(new GeneratedHidRange(start, end)));
-        assertEquals("Range overlaps with pregenerated healthIds", healthIdController.generateRange(start, end).getResult());
-        assertEquals("Range overlaps with pregenerated healthIds", healthIdController.generateRange(start - 1, end + 1).getResult());
-        assertEquals("Range overlaps with pregenerated healthIds", healthIdController.generateRange(end, 9800100202L).getResult());
-        assertEquals("Range overlaps with pregenerated healthIds", healthIdController.generateRange(9800100000L, start).getResult());
+    public void testGenerateBlockForOrg() throws Exception {
+        long start = 1000L, total = 100L;
+        GeneratedHIDBlock hidBlock = new GeneratedHIDBlock(1000L, "other", 1000L, 1099L, 100L, "");
+        when(healthIdService.generateBlockForOrg(eq(start), eq(total), eq("other"), any(UserInfo.class))).thenReturn(hidBlock);
+        HealthIdController healthIdController = new HealthIdController(healthIdService);
+        assertEquals("Generated 100 HIDs.", healthIdController.generateBlockForOrg("other", start, total).getResult());
+        verify(healthIdService, times(1)).generateBlockForOrg(eq(start), eq(total), eq("other"), any(UserInfo.class));
+    }
+
+    @Test
+    public void testGenerateBlockForOrgWhenSeriesIsExhausted() throws Exception {
+        long start = 1000L, total = 150L;
+        GeneratedHIDBlock hidBlock = new GeneratedHIDBlock(1000L, "other", 1000L, 1099L, 100L, "");
+        when(healthIdService.generateBlockForOrg(eq(start), eq(total), eq("other"), any(UserInfo.class))).thenReturn(hidBlock);
+        HealthIdController healthIdController = new HealthIdController(healthIdService);
+        assertEquals("Can generate only 100 HIDs, because series exhausted. Use another series.", healthIdController.generateBlockForOrg("other", start, total).getResult());
+        verify(healthIdService, times(1)).generateBlockForOrg(eq(start), eq(total), eq("other"), any(UserInfo.class));
     }
 }

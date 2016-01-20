@@ -1,8 +1,10 @@
 package org.sharedhealth.healthId.web.repository;
 
+import com.datastax.driver.core.querybuilder.Insert;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
+import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,8 +15,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-import static org.sharedhealth.healthId.web.repository.RepositoryConstants.CF_MCI_HEALTH_ID;
-import static org.sharedhealth.healthId.web.repository.RepositoryConstants.HID;
+import static org.sharedhealth.healthId.web.repository.RepositoryConstants.*;
 import static org.springframework.data.cassandra.core.CassandraTemplate.createInsertQuery;
 
 @Component
@@ -28,16 +29,28 @@ public class HealthIdRepository extends BaseRepository {
         super(cassandraOps);
     }
 
-    public MciHealthId saveHealthId(MciHealthId MciHealthId) {
-        logger.debug(String.format("Inserting new hid :%s", MciHealthId.getHid()));
-        cassandraOps.executeAsynchronously(createInsertQuery(CF_MCI_HEALTH_ID, MciHealthId, null, cassandraOps.getConverter()).ifNotExists());
-        return MciHealthId;
+    public MciHealthId saveMciHealthId(MciHealthId mciHealthId) {
+        Insert insertQuery = getInsertQuery(mciHealthId);
+        cassandraOps.executeAsynchronously(insertQuery.ifNotExists());
+        return mciHealthId;
     }
 
-    public MciHealthId saveHealthIdSync(MciHealthId MciHealthId) {
-        logger.debug(String.format("Inserting new hid :%s", MciHealthId.getHid()));
-        cassandraOps.execute(createInsertQuery(CF_MCI_HEALTH_ID, MciHealthId, null, cassandraOps.getConverter()).ifNotExists());
-        return MciHealthId;
+    public MciHealthId saveMciHealthIdSync(MciHealthId mciHealthId) {
+        Insert insertQuery = getInsertQuery(mciHealthId);
+        cassandraOps.execute(insertQuery.ifNotExists());
+        return mciHealthId;
+    }
+
+    public OrgHealthId saveOrgHealthId(OrgHealthId orgHealthId) {
+        Insert insertQuery = getInsertQuery(orgHealthId);
+        cassandraOps.executeAsynchronously(insertQuery.ifNotExists());
+        return orgHealthId;
+    }
+
+    public OrgHealthId saveOrgHealthIdSync(OrgHealthId orgHealthId) {
+        Insert insertQuery = getInsertQuery(orgHealthId);
+        cassandraOps.execute(insertQuery.ifNotExists());
+        return orgHealthId;
     }
 
     public List<MciHealthId> getNextBlock(int blockSize) {
@@ -76,7 +89,24 @@ public class HealthIdRepository extends BaseRepository {
 
     public MciHealthId getHealthId(String hid) {
         Select selectHealthId = QueryBuilder.select().from(CF_MCI_HEALTH_ID).where(QueryBuilder.eq(HID, hid)).limit(1);
-        List<MciHealthId> MciHealthIds = cassandraOps.select(selectHealthId, MciHealthId.class);
-        return MciHealthIds.isEmpty() ? null : MciHealthIds.get(0);
+        List<MciHealthId> mciHealthIds = cassandraOps.select(selectHealthId, MciHealthId.class);
+        return mciHealthIds.isEmpty() ? null : mciHealthIds.get(0);
+    }
+
+    private Insert getInsertQuery(MciHealthId mciHealthId) {
+        logger.debug(String.format("Inserting new hid for MCI :%s", mciHealthId.getHid()));
+        return createInsertQuery(CF_MCI_HEALTH_ID, mciHealthId, null, cassandraOps.getConverter());
+    }
+
+    private Insert getInsertQuery(OrgHealthId orgHealthId) {
+        logger.debug(String.format("Inserting new hid for organization %s :%s", orgHealthId.getAllocatedFor(), orgHealthId.getHealthId()));
+        return createInsertQuery(CF_ORG_HEALTH_ID, orgHealthId, null, cassandraOps.getConverter());
+    }
+
+
+    public OrgHealthId findOrgHealthId(String healthId) {
+        Select selectHealthId = QueryBuilder.select().from(CF_ORG_HEALTH_ID).where(QueryBuilder.eq(HEALTH_ID, healthId)).limit(1);
+        List<OrgHealthId> orgHealthIds = cassandraOps.select(selectHealthId, OrgHealthId.class);
+        return orgHealthIds.isEmpty() ? null : orgHealthIds.get(0);
     }
 }

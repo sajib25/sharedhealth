@@ -19,13 +19,9 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.util.HashSet;
-import java.util.Set;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.Set;
+import java.util.concurrent.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -50,16 +46,17 @@ public class HealthIdServiceIT {
     public void setUp() throws ExecutionException, InterruptedException {
         cqlTemplate.execute("truncate mci_healthId");
         healthIdRepository.resetLastReservedHealthId();
-        createHealthIds(9800000000L);
     }
 
     @After
-    public void cleanIp() throws Exception {
+    public void tearDown() throws Exception {
         cqlTemplate.execute("truncate mci_healthId");
     }
 
+    @Ignore
     @Test
     public void shouldGenerateUniqueBlock() throws Exception {
+        createHealthIds(9800000000L);
         ExecutorService executor = Executors.newFixedThreadPool(5);
         final Set<Future<List<MciHealthId>>> eventualHealthIds = new HashSet<>();
         for (int i = 0; i < 100; i++) {
@@ -83,7 +80,7 @@ public class HealthIdServiceIT {
     private void createHealthIds(long prefix) {
         logger.debug("generating health Id for test");
         for (int i = 0; i < 200; i++) {
-            healthIdRepository.saveHealthIdSync(new MciHealthId(String.valueOf(prefix + i)));
+            healthIdRepository.saveMciHealthIdSync(new MciHealthId(String.valueOf(prefix + i)));
         }
     }
 }

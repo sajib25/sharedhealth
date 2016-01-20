@@ -1,10 +1,8 @@
 package org.sharedhealth.healthId.web.controller;
 
-import org.sharedhealth.healthId.web.Model.GeneratedHidRange;
+import org.sharedhealth.healthId.web.Model.GeneratedHIDBlock;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
-import org.sharedhealth.healthId.web.config.HealthIdProperties;
 import org.sharedhealth.healthId.web.security.UserInfo;
-import org.sharedhealth.healthId.web.service.GeneratedHidRangeService;
 import org.sharedhealth.healthId.web.service.HealthIdService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,95 +15,76 @@ import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.List;
 
-import static java.lang.String.format;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @RestController
-@RequestMapping("/healthId")
+@RequestMapping("/healthIds")
 public class HealthIdController extends BaseController {
     private static final Logger logger = LoggerFactory.getLogger(HealthIdController.class);
+    public static final String GENERATE_ALL_URI = "/generate";
+    public static final String GENERATE_BLOCK_URI = "/generateBlock";
+    public static final String GENERATE_BLOCK_FOR_ORG_URI = "/generateBlockForOrg";
+    public static final String NEXT_BLOCK_URI = "/nextBlock";
 
     private HealthIdService healthIdService;
-    private GeneratedHidRangeService generatedHidRangeService;
-    private HealthIdProperties properties;
 
     @Autowired
-    public HealthIdController(HealthIdService healthIdService, GeneratedHidRangeService generatedHidRangeService, HealthIdProperties properties) {
+    public HealthIdController(HealthIdService healthIdService) {
         this.healthIdService = healthIdService;
-        this.generatedHidRangeService = generatedHidRangeService;
-        this.properties = properties;
     }
 
     @PreAuthorize("hasAnyRole('ROLE_MCI Admin')")
-    @RequestMapping(method = POST, value = "/generate")
-    public DeferredResult<String> generate(){
+    @RequestMapping(method = POST, value = GENERATE_ALL_URI)
+    public DeferredResult<String> generate() {
         UserInfo userInfo = getUserInfo();
+
+        logAccessDetails(userInfo, "Generating new hids");
+        GeneratedHIDBlock generatedHIDBlock = healthIdService.generateAll(userInfo);
         final DeferredResult<String> deferredResult = new DeferredResult<>();
-        Long start = properties.getMciStartHid();
-        Long end = properties.getMciEndHid();
-        if (hasOverlappingRange(generatedHidRangeService.getPreGeneratedHidRanges(), start, end)) {
-            deferredResult.setErrorResult(String.format("Range overlaps with pregenerated healthIds"));
-        } else {
-            logAccessDetails(userInfo, format("Generating new hids"));
-            long numberOfValidHids = healthIdService.generate(start, end);
-            if (numberOfValidHids > 0) {
-                generatedHidRangeService.saveGeneratedHidRange(new GeneratedHidRange(start, end));
-            }
-            deferredResult.setResult(String.format("GENERATED %s Ids", numberOfValidHids));
-            logger.info(String.format("%s healthIds generated", numberOfValidHids));
-        }
+        String message = String.format("Generated %s HIDs.", generatedHIDBlock.getTotalHIDs());
+        deferredResult.setResult(message);
+        logger.info(message);
         return deferredResult;
     }
 
     @PreAuthorize("hasAnyRole('ROLE_MCI Admin')")
-    @RequestMapping(method = POST, value = "/generateRange")
-    public DeferredResult<String> generateRange(@RequestParam(value = "start") long start,
-                                           @RequestParam(value = "end") long end){
+    @RequestMapping(method = POST, value = GENERATE_BLOCK_URI)
+    public DeferredResult<String> generateBlock(@RequestParam(value = "start") long start,
+                                                @RequestParam(value = "totalHIDs") long totalHIDs) {
         UserInfo userInfo = getUserInfo();
-        final DeferredResult<String> deferredResult = new DeferredResult<>();
-        if (hasOverlappingRange(generatedHidRangeService.getPreGeneratedHidRanges(), start, end)) {
-            deferredResult.setErrorResult(String.format("Range overlaps with pregenerated healthIds"));
-        } else {
-            logAccessDetails(userInfo, format("Generating new hids"));
-            long numberOfValidHids = healthIdService.generate(start, end);
-            if (numberOfValidHids > 0) {
-                generatedHidRangeService.saveGeneratedHidRange(new GeneratedHidRange(start, end));
-            }
-            deferredResult.setResult(String.format("GENERATED %s Ids", numberOfValidHids));
-            logger.info(String.format("%s healthIds generated", numberOfValidHids));
-        }
-        return deferredResult;
-    }
-
-    private boolean hasOverlappingRange(List<GeneratedHidRange> preGeneratedHidRanges, long start, long end) {
-        for (GeneratedHidRange preGeneratedHidRange : preGeneratedHidRanges) {
-            if (isOverlapping(preGeneratedHidRange, start, end)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private boolean isOverlapping(GeneratedHidRange preGeneratedHidRange, long start, long end) {
-        if (preGeneratedHidRange.getBeginsAt() <= start && start <= preGeneratedHidRange.getEndsAt()) {
-            return true;
-        }
-        if (preGeneratedHidRange.getBeginsAt() <= end && end <= preGeneratedHidRange.getEndsAt()) {
-            return true;
-        }
-        if (start <= preGeneratedHidRange.getBeginsAt() && preGeneratedHidRange.getBeginsAt() <= end) {
-            return true;
-        }
-        if (start <= preGeneratedHidRange.getEndsAt() && preGeneratedHidRange.getEndsAt() <= end) {
-            return true;
-        }
-        return false;
+        logAccessDetails(userInfo, "Generating new hids");
+        GeneratedHIDBlock generatedHIDBlock = healthIdService.generateBlock(start, totalHIDs, userInfo);
+        return getResult(generatedHIDBlock, totalHIDs);
     }
 
     @PreAuthorize("hasAnyRole('ROLE_MCI Admin')")
-    @RequestMapping(method = GET, value = "/nextBlock")
+    @RequestMapping(method = POST, value = GENERATE_BLOCK_FOR_ORG_URI)
+    public DeferredResult<String> generateBlockForOrg(@RequestParam(value = "org") String orgCode,
+                                                      @RequestParam(value = "start") long start,
+                                                      @RequestParam(value = "totalHIDs") long totalHIDs) {
+        UserInfo userInfo = getUserInfo();
+        logAccessDetails(userInfo, "Generating new hids");
+        GeneratedHIDBlock generatedHIDBlock = healthIdService.generateBlockForOrg(start, totalHIDs, orgCode, userInfo);
+        return getResult(generatedHIDBlock, totalHIDs);
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_MCI Admin')")
+    @RequestMapping(method = GET, value = NEXT_BLOCK_URI)
     public List<MciHealthId> nextBlock() {
         return healthIdService.getNextBlock();
+    }
+
+    private DeferredResult<String> getResult(GeneratedHIDBlock generatedHIDBlock, long totalHIDs) {
+        final DeferredResult<String> deferredResult = new DeferredResult<>();
+        String message;
+        if (generatedHIDBlock.getTotalHIDs() < totalHIDs) {
+            message = String.format("Can generate only %s HIDs, because series exhausted. Use another series.", generatedHIDBlock.getTotalHIDs());
+        } else {
+            message = String.format("Generated %s HIDs.", generatedHIDBlock.getTotalHIDs());
+        }
+        deferredResult.setResult(message);
+        logger.info(message);
+        return deferredResult;
     }
 }

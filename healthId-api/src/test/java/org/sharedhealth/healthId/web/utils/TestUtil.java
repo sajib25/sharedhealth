@@ -12,8 +12,7 @@ import java.util.UUID;
 import static java.util.Arrays.asList;
 import static java.util.Collections.addAll;
 import static java.util.Collections.unmodifiableList;
-import static org.sharedhealth.healthId.web.repository.RepositoryConstants.CF_GENERATED_HID_RANGE;
-import static org.sharedhealth.healthId.web.repository.RepositoryConstants.CF_MCI_HEALTH_ID;
+import static org.sharedhealth.healthId.web.repository.RepositoryConstants.*;
 
 public class TestUtil {
 
@@ -27,7 +26,9 @@ public class TestUtil {
     private static List<String> getAllColumnFamilies() {
         return asList(
                 CF_MCI_HEALTH_ID,
-                CF_GENERATED_HID_RANGE
+                CF_GENERATED_HID_RANGE,
+                CF_GENERATED_HID_BLOCKS,
+                CF_ORG_HEALTH_ID
         );
     }
 
