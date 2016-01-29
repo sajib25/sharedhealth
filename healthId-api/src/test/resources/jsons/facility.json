@@ -1,0 +1,43 @@
+{
+  "name": "Amta Union Sub Center",
+  "url": "",
+  "id": "10000059",
+  "active": 1,
+  "createdAt": "",
+  "updatedAt": "-0001-11-30 00:00:00",
+  "coordinates": [
+    "0",
+    "0"
+  ],
+  "identifiers": {
+    "agency": "DGHS",
+    "context": "HRM",
+    "id": 55
+  },
+  "properties": {
+    "ownership": "Fully Government-owned",
+    "org_type": "Union Sub-center",
+    "org_level": "Union",
+    "care_level": "",
+    "deleted_at": null,
+    "services": [],
+    "locations": {
+      "division_code": "30",
+      "district_code": "26",
+      "upazila_code": "14",
+      "paurasava_code": "",
+      "union_code": "",
+      "ward_code": ""
+    },
+    "contacts": {
+      "name": "",
+      "email": "amta@usc.dghs.gov.bd",
+      "phone": "",
+      "mobile": "",
+      "fax": null
+    },
+    "catchment": [
+      "302614"
+    ]
+  }
+}

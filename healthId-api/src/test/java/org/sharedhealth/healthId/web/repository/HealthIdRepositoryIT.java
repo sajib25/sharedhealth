@@ -9,6 +9,7 @@ import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.config.EnvironmentMock;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.healthId.web.launch.WebMvcConfig;
+import org.sharedhealth.healthId.web.utils.TestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.select;
+import static com.datastax.driver.core.utils.UUIDs.timeBased;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.*;
 
@@ -45,7 +47,7 @@ public class HealthIdRepositoryIT {
 
     @After
     public void tearDown() {
-        cqlTemplate.execute("truncate mci_healthId");
+        TestUtil.truncateAllColumnFamilies(cqlTemplate);
     }
 
     private List<MciHealthId> createHealthIds(long prefix) {
@@ -103,7 +105,7 @@ public class HealthIdRepositoryIT {
 
     @Test
     public void shouldSaveAHIDForGivenOrganization() throws Exception {
-        OrgHealthId orgHealthId = new OrgHealthId("9110", "OTHER-ORG", null);
+        OrgHealthId orgHealthId = new OrgHealthId("9110", "OTHER-ORG", timeBased(), null);
 
         healthIdRepository.saveOrgHealthIdSync(orgHealthId);
 
@@ -115,8 +117,8 @@ public class HealthIdRepositoryIT {
 
     @Test
     public void shouldFindOrgHIDByGivenHID() throws Exception {
-        OrgHealthId hid = new OrgHealthId("1234", "XYZ", null);
-        cqlTemplate.insert(asList(hid, new OrgHealthId("1134", "ABC", null)));
+        OrgHealthId hid = new OrgHealthId("1234", "XYZ", timeBased(), null);
+        cqlTemplate.insert(asList(hid, new OrgHealthId("1134", "ABC", timeBased(), null)));
 
         OrgHealthId orgHealthId = healthIdRepository.findOrgHealthId("1234");
         assertEquals(hid, orgHealthId);

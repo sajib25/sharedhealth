@@ -43,13 +43,13 @@ public class HealthIdRepository extends BaseRepository {
 
     public OrgHealthId saveOrgHealthId(OrgHealthId orgHealthId) {
         Insert insertQuery = getInsertQuery(orgHealthId);
-        cassandraOps.executeAsynchronously(insertQuery.ifNotExists());
+        cassandraOps.executeAsynchronously(insertQuery);
         return orgHealthId;
     }
 
     public OrgHealthId saveOrgHealthIdSync(OrgHealthId orgHealthId) {
         Insert insertQuery = getInsertQuery(orgHealthId);
-        cassandraOps.execute(insertQuery.ifNotExists());
+        cassandraOps.execute(insertQuery);
         return orgHealthId;
     }
 
@@ -107,6 +107,5 @@ public class HealthIdRepository extends BaseRepository {
     public OrgHealthId findOrgHealthId(String healthId) {
         Select selectHealthId = QueryBuilder.select().from(CF_ORG_HEALTH_ID).where(QueryBuilder.eq(HEALTH_ID, healthId)).limit(1);
         List<OrgHealthId> orgHealthIds = cassandraOps.select(selectHealthId, OrgHealthId.class);
-        return orgHealthIds.isEmpty() ? null : orgHealthIds.get(0);
-    }
+        return orgHealthIds.isEmpty() ? null : orgHealthIds.get(0);    }
 }

@@ -16,7 +16,7 @@ public class HealthIdProperties {
     public static PropertySourcesPlaceholderConfigurer propertyPlaceholderConfigurer() {
         return new PropertySourcesPlaceholderConfigurer();
     }
-
+    
     @Value("${CASSANDRA_KEYSPACE}")
     private String cassandraKeySpace;
     @Value("${CASSANDRA_HOST}")
@@ -39,18 +39,28 @@ public class HealthIdProperties {
     @Value("${IDP_AUTH_TOKEN}")
     private String idpAuthToken;
 
-    @Value("${MCI_INVALID_HID_PATTERN}")
-    private String mciInvalidHidPattern;
-    @Value("${ORG_INVALID_HID_PATTERN}")
-    private String orgInvalidHidPattern;
+    @Value("${FR_URL}")
+    private String frUrl;
+
     @Value("${HID_STORAGE_PATH}")
     private String hidStoragePath;
+
+    @Value("${OTHER_ORG_INVALID_HID_PATTERN}")
+    private String otherOrgInvalidHidPattern;
+    @Value("${OTHER_ORG_START_HID}")
+    private String otherOrgStartHid;
+    @Value("${OTHER_ORG_END_HID}")
+    private String otherOrgEndHid;
 
 
     @Value("${MCI_START_HID}")
     private String mciStartHid;
     @Value("${MCI_END_HID}")
     private String mciEndHid;
+    @Value("${MCI_ORG_CODE}")
+    private String mciOrgCode;
+    @Value("${MCI_INVALID_HID_PATTERN}")
+    private String mciInvalidHidPattern;
 
     @Value("${HEALTH_ID_BLOCK_SIZE}")
     private String healthIdBlockSize;
@@ -137,15 +147,7 @@ public class HealthIdProperties {
         this.healthIdBlockSize = healthIdBlockSize;
     }
 
-
-    public String getOrgInvalidHidPattern() {
-        return orgInvalidHidPattern;
-    }
-
-    public void setOrgInvalidHidPattern(String orgInvalidHidPattern) {
-        this.orgInvalidHidPattern = orgInvalidHidPattern;
-    }
-
+    
     public String getHidStoragePath() {
         return hidStoragePath;
     }
@@ -154,5 +156,45 @@ public class HealthIdProperties {
         this.hidStoragePath = hidStoragePath;
     }
 
+    public String getOtherOrgInvalidHidPattern() {
+        return otherOrgInvalidHidPattern;
+    }
+
+    public void setOtherOrgInvalidHidPattern(String otherOrgInvalidHidPattern) {
+        this.otherOrgInvalidHidPattern = otherOrgInvalidHidPattern;
+    }
+
+    public Long getOtherOrgStartHid() {
+        return Long.valueOf(otherOrgStartHid);
+    }
+
+    public void setOtherOrgStartHid(String otherOrgStartHid) {
+        this.otherOrgStartHid = otherOrgStartHid;
+    }
+
+    public Long getOtherOrgEndHid() {
+        return Long.valueOf(otherOrgEndHid);
+    }
+
+    public void setOtherOrgEndHid(String otherOrgEndHid) {
+        this.otherOrgEndHid = otherOrgEndHid;
+    }
+
+    public String getMciOrgCode() {
+        return mciOrgCode;
+    }
+
+    public void setMciOrgCode(String mciOrgCode) {
+        this.mciOrgCode = mciOrgCode;
+    }
+
+
+    public String getFrUrl() {
+        return frUrl;
+    }
+
+    public void setFrUrl(String frUrl) {
+        this.frUrl = frUrl;
+    }
 
 }

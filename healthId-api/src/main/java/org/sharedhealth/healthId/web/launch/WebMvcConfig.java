@@ -35,6 +35,7 @@ import java.util.concurrent.Executors;
         "org.sharedhealth.healthId.web.repository",
         "org.sharedhealth.healthId.web.security",
         "org.sharedhealth.healthId.web.service",
+        "org.sharedhealth.healthId.web.client",
         "org.sharedhealth.healthId.web.utils"
 })
 public class WebMvcConfig extends WebMvcConfigurerAdapter implements SchedulingConfigurer {
