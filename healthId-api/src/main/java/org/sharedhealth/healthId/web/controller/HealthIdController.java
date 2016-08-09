@@ -11,6 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -28,7 +29,6 @@ public class HealthIdController extends BaseController {
     public static final String GENERATE_ALL_URI = "/generate";
     public static final String GENERATE_BLOCK_URI = "/generateBlock";
     public static final String GENERATE_BLOCK_FOR_ORG_URI = "/generateBlockForOrg";
-    public static final String NEXT_BLOCK_URI = "/nextBlock";
     private static final long HID_GENERATION_LIMIT = 2000000;
 
     private HealthIdService healthIdService;
@@ -82,9 +82,9 @@ public class HealthIdController extends BaseController {
     }
 
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
-    @RequestMapping(method = GET, value = NEXT_BLOCK_URI)
-    public List<MciHealthId> nextBlock() {
-        return healthIdService.getNextBlock();
+    @RequestMapping(method = GET, value = "/nextBlock/mci/{mciCode}")
+    public List<MciHealthId> nextBlock(@PathVariable(value = "mciCode") String mciCode) {
+        return healthIdService.getNextBlock(mciCode);
     }
 
     private DeferredResult<String> getResult(GeneratedHIDBlock generatedHIDBlock, long totalHIDs) {

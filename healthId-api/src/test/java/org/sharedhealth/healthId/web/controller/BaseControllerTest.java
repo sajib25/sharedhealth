@@ -84,7 +84,7 @@ public class BaseControllerTest {
 
     private void createHealthIds() {
         for (int i = 0; i < numberOfHealthIdsNeeded(); i++) {
-            healthIdRepository.saveMciHealthIdSync(new MciHealthId(String.valueOf(new Date().getTime() + i)));
+            healthIdRepository.saveMciHealthId(new MciHealthId(String.valueOf(new Date().getTime() + i)));
         }
     }
 

@@ -65,22 +65,6 @@ public class HealthIdControllerTest {
     }
 
     @Test
-    public void testGetNextBlock() {
-        when(healthIdService.getNextBlock()).thenReturn(getNextBlock());
-        HealthIdController healthIdController = new HealthIdController(healthIdService, facilityService, healthIdProperties);
-        assertEquals(3, healthIdController.nextBlock().size());
-        verify(healthIdService, times(1)).getNextBlock();
-    }
-
-    private ArrayList<MciHealthId> getNextBlock() {
-        ArrayList<MciHealthId> MciHealthIds = new ArrayList<>();
-        MciHealthIds.add(new MciHealthId("123"));
-        MciHealthIds.add(new MciHealthId("124"));
-        MciHealthIds.add(new MciHealthId("125"));
-        return MciHealthIds;
-    }
-
-    @Test
     public void testGenerateRange() {
         long start = 1000L, total = 100L;
         GeneratedHIDBlock hidBlock = new GeneratedHIDBlock(1000L, "MCI", 1000L, 1099L, 100L, "", timeBased());

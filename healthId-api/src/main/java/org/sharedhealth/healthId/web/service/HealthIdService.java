@@ -7,6 +7,7 @@ import org.sharedhealth.healthId.web.Model.MciHealthId;
 import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.Model.RequesterDetails;
 import org.sharedhealth.healthId.web.config.HealthIdProperties;
+import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.healthId.web.repository.HealthIdRepository;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.sharedhealth.healthId.web.utils.FileUtil;
@@ -17,6 +18,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -97,14 +99,21 @@ public class HealthIdService {
         return saveGeneratedBlock(startForBlock, startForBlock + i - 1, numberOfValidHIDs, orgCode, userInfo, generatedAt);
     }
 
-    public synchronized List<MciHealthId> getNextBlock() {
-        return healthIdRepository.getNextBlock(healthIdProperties.getHealthIdBlockSize());
+    public synchronized List<MciHealthId> getNextBlock(final String mciCode) {
+        int healthIdBlockSize = healthIdProperties.getHealthIdBlockSize();
+        System.out.println("Hid block size " + healthIdBlockSize);
+        List<MciHealthId> mciHealthIds = healthIdRepository.getNextBlock(healthIdBlockSize);
+        if (CollectionUtils.isEmpty(mciHealthIds)) throw new HealthIdExhaustedException();
+        List<OrgHealthId> orgHealthIds = new ArrayList<>();
+        for (MciHealthId mciHealthId : mciHealthIds) {
+            orgHealthIds.add(new OrgHealthId(mciHealthId.getHid(), mciCode, null, null));
+        }
+        healthIdRepository.saveOrgHidAndDeleteMciHid(mciHealthIds, orgHealthIds);
+        return mciHealthIds;
     }
 
-    public synchronized List<MciHealthId> getNextBlock(int blockSize) {
-        return healthIdRepository.getNextBlock(blockSize);
-    }
 
+    @Deprecated
     public void markMCIHealthIdUsed(MciHealthId nextMciHealthId) {
         healthIdRepository.removedUsedHid(nextMciHealthId);
         OrgHealthId orgHealthId = new OrgHealthId(nextMciHealthId.getHid(), MCI_ORG_CODE, null, timeBased());
