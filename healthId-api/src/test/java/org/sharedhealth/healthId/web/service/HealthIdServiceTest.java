@@ -221,7 +221,7 @@ public class HealthIdServiceTest {
     @Test(expected = HealthIdExhaustedException.class)
     public void shouldGetExceptionIfIdsAreNotGeneratedBeforeFetch() throws ExecutionException, InterruptedException {
         HealthIdService healthIdService = new HealthIdService(healthIdProperties, healthIdRepository, checksumGenerator, generatedHidBlockService);
-        healthIdService.getNextBlock(MCI_ORG_CODE);
+        healthIdService.getNextBlock(MCI_ORG_CODE, 10);
     }
 
     @Test
@@ -229,11 +229,12 @@ public class HealthIdServiceTest {
         ArrayList<MciHealthId> result = new ArrayList<>();
         result.add(new MciHealthId("898998"));
         result.add(new MciHealthId("898999"));
-        when(healthIdRepository.getNextBlock(healthIdProperties.getHealthIdBlockSize())).thenReturn(result);
+        int blockSize = 3;
+        when(healthIdRepository.getNextBlock(blockSize)).thenReturn(result);
 
         HealthIdService healthIdService = new HealthIdService(healthIdProperties, healthIdRepository, checksumGenerator, generatedHidBlockService);
-        List<MciHealthId> nextBlock = healthIdService.getNextBlock("MCI");
-        verify(healthIdRepository).getNextBlock(healthIdProperties.getHealthIdBlockSize());
+        List<MciHealthId> nextBlock = healthIdService.getNextBlock("MCI", blockSize);
+        verify(healthIdRepository).getNextBlock(blockSize);
         verify(healthIdRepository, times(1)).saveOrgHidAndDeleteMciHid(any(List.class), any(List.class));
         assertEquals(2, nextBlock.size());
     }

@@ -99,14 +99,13 @@ public class HealthIdService {
         return saveGeneratedBlock(startForBlock, startForBlock + i - 1, numberOfValidHIDs, orgCode, userInfo, generatedAt);
     }
 
-    public synchronized List<MciHealthId> getNextBlock(final String mciCode) {
-        int healthIdBlockSize = healthIdProperties.getHealthIdBlockSize();
-        System.out.println("Hid block size " + healthIdBlockSize);
-        List<MciHealthId> mciHealthIds = healthIdRepository.getNextBlock(healthIdBlockSize);
+    public synchronized List<MciHealthId> getNextBlock(final String mciCode, Integer blockSize) {
+        List<MciHealthId> mciHealthIds = healthIdRepository.getNextBlock(blockSize);
         if (CollectionUtils.isEmpty(mciHealthIds)) throw new HealthIdExhaustedException();
         List<OrgHealthId> orgHealthIds = new ArrayList<>();
+        UUID generatedAt = timeBased();
         for (MciHealthId mciHealthId : mciHealthIds) {
-            orgHealthIds.add(new OrgHealthId(mciHealthId.getHid(), mciCode, null, null));
+            orgHealthIds.add(new OrgHealthId(mciHealthId.getHid(), mciCode, generatedAt, null));
         }
         healthIdRepository.saveOrgHidAndDeleteMciHid(mciHealthIds, orgHealthIds);
         return mciHealthIds;

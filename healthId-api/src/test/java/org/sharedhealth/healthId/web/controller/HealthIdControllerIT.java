@@ -17,12 +17,13 @@ import org.springframework.web.context.WebApplicationContext;
 import javax.servlet.Filter;
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.givenThat;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_ALL_URI;
 import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_BLOCK_FOR_ORG_URI;
@@ -152,8 +153,42 @@ public class HealthIdControllerIT extends BaseControllerTest {
         String contentAsString = mvcResult.getResponse().getContentAsString();
 
         final int healthIdBlockSize = healthIdProperties.getHealthIdBlockSize();
-        List list = new ObjectMapper().readValue(contentAsString, List.class);
-        assertEquals(list.size(), healthIdBlockSize);
+        Map response = new ObjectMapper().readValue(contentAsString, Map.class);
+        assertTrue(healthIdBlockSize == ((List) response.get("hids")).size());
+        assertTrue(healthIdBlockSize == (Integer) response.get("total"));
+    }
+
+    @Test
+    public void testGetNextBlockWithBlockSizeDefined() throws Exception {
+        validAccessToken = "85HoExoxghh1pislg65hUM0q3wM9kfzcMdpYS0ixPD";
+        validClientId = "18570";
+        validEmail = "shrsystemadmin@test.com";
+
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .addFilters(springSecurityFilterChain)
+                .build();
+
+        givenThat(WireMock.get(urlEqualTo("/token/" + validAccessToken))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(asString("jsons/userDetails/userDetailForSHRSystemAdmin.json"))));
+
+        int blockSize = 7;
+        MvcResult mvcResult = mockMvc.perform(get(API_END_POINT + "/nextBlock/mci/MCI1?blockSize=" + blockSize)
+                .accept(APPLICATION_JSON)
+                .header(AUTH_TOKEN_KEY, validAccessToken)
+                .header(FROM_KEY, validEmail)
+                .header(CLIENT_ID_KEY, validClientId)
+                .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+
+        Map response = new ObjectMapper().readValue(contentAsString, Map.class);
+        assertTrue(blockSize == ((List) response.get("hids")).size());
+        assertTrue(blockSize == (Integer) response.get("total"));
     }
 
     @Test

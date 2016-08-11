@@ -1,5 +1,8 @@
 package org.sharedhealth.healthId.web.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Transformer;
 import org.sharedhealth.healthId.web.Model.GeneratedHIDBlock;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
 import org.sharedhealth.healthId.web.config.HealthIdProperties;
@@ -10,6 +13,7 @@ import org.sharedhealth.healthId.web.service.HealthIdService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -17,7 +21,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
@@ -26,6 +33,7 @@ import static org.springframework.web.bind.annotation.RequestMethod.POST;
 @RequestMapping("/healthIds")
 public class HealthIdController extends BaseController {
     private static final Logger logger = LoggerFactory.getLogger(HealthIdController.class);
+
     public static final String GENERATE_ALL_URI = "/generate";
     public static final String GENERATE_BLOCK_URI = "/generateBlock";
     public static final String GENERATE_BLOCK_FOR_ORG_URI = "/generateBlockForOrg";
@@ -82,9 +90,24 @@ public class HealthIdController extends BaseController {
     }
 
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
-    @RequestMapping(method = GET, value = "/nextBlock/mci/{mciCode}")
-    public List<MciHealthId> nextBlock(@PathVariable(value = "mciCode") String mciCode) {
-        return healthIdService.getNextBlock(mciCode);
+    @RequestMapping(method = GET, value = "/nextBlock/mci/{mciCode}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map nextBlock(@PathVariable(value = "mciCode") String mciCode,
+                         @RequestParam(value = "blockSize", required = false) Integer blockSize) throws JsonProcessingException {
+        int defaultBlockSize = healthIdProperties.getHealthIdBlockSize();
+        if (blockSize == null || blockSize <= 0 || blockSize > defaultBlockSize)
+            blockSize = defaultBlockSize;
+        logger.info(String.format("Assigning %s MCI healthIds for %s.", blockSize, mciCode));
+        List<MciHealthId> nextBlock = healthIdService.getNextBlock(mciCode, blockSize);
+        HashMap<String, Object> responseMap = new HashMap<>();
+        responseMap.put("total", nextBlock.size());
+        Collection hids = CollectionUtils.collect(nextBlock, new Transformer() {
+            @Override
+            public String transform(Object input) {
+                return ((MciHealthId) input).getHid();
+            }
+        });
+        responseMap.put("hids", hids);
+        return responseMap;
     }
 
     private DeferredResult<String> getResult(GeneratedHIDBlock generatedHIDBlock, long totalHIDs) {

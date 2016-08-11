@@ -30,7 +30,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @WebAppConfiguration
 @ContextConfiguration(initializers = EnvironmentMock.class, classes = WebMvcConfig.class)
-@TestPropertySource(properties = {"HEALTH_ID_BLOCK_SIZE = 1"})
+@TestPropertySource(properties = {"HEALTH_ID_BLOCK_SIZE = 10"})
 @CassandraUnit
 public class BaseControllerTest {
 

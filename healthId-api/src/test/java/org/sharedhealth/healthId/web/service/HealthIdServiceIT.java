@@ -51,8 +51,8 @@ public class HealthIdServiceIT {
     @Test
     public void shouldGenerateUniqueBlock() throws Exception {
         createHealthIds(9800000000L);
-        List<MciHealthId> mciHealthIds = healthIdService.getNextBlock("MCI1");
-        List<MciHealthId> mciHealthIds2 = healthIdService.getNextBlock("MCI2");
+        List<MciHealthId> mciHealthIds = healthIdService.getNextBlock("MCI1", 10);
+        List<MciHealthId> mciHealthIds2 = healthIdService.getNextBlock("MCI2", 20);
         Collection intersection = CollectionUtils.intersection(mciHealthIds, mciHealthIds2);
         assertTrue(CollectionUtils.isEmpty(intersection));
     }
