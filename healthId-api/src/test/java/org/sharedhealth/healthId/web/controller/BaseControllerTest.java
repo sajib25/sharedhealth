@@ -30,10 +30,7 @@ import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppC
 
 @WebAppConfiguration
 @ContextConfiguration(initializers = EnvironmentMock.class, classes = WebMvcConfig.class)
-@TestPropertySource(properties = {"HEALTH_ID_REPLENISH_INITIAL_DELAY = 0",
-        "HEALTH_ID_REPLENISH_DELAY = 1",
-        "HEALTH_ID_BLOCK_SIZE = 1",
-        "HEALTH_ID_BLOCK_SIZE_THRESHOLD=1"})
+@TestPropertySource(properties = {"HEALTH_ID_BLOCK_SIZE = 1"})
 @CassandraUnit
 public class BaseControllerTest {
 

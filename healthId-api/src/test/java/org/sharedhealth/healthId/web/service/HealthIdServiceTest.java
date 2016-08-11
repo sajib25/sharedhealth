@@ -56,7 +56,6 @@ public class HealthIdServiceTest {
         healthIdProperties.setMciStartHid("9800000000");
         healthIdProperties.setMciEndHid("9999999999");
         healthIdProperties.setHealthIdBlockSize("10");
-        healthIdProperties.setHealthIdBlockSizeThreshold("1");
         initMocks(this);
     }
 

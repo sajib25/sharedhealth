@@ -65,10 +65,6 @@ public class HealthIdProperties {
     @Value("${HEALTH_ID_BLOCK_SIZE}")
     private String healthIdBlockSize;
 
-    @Value("${HEALTH_ID_BLOCK_SIZE_THRESHOLD}")
-    private String healthIdBlockSizeThreshold;
-
-
     public String getCassandraKeySpace() {
         return cassandraKeySpace;
     }
@@ -133,14 +129,6 @@ public class HealthIdProperties {
 
     public int getHealthIdBlockSize() {
         return Integer.parseInt(healthIdBlockSize);
-    }
-
-    public int getHealthIdBlockSizeThreshold() {
-        return Integer.parseInt(healthIdBlockSizeThreshold);
-    }
-
-    public void setHealthIdBlockSizeThreshold(String healthIdBlockSizeThreshold) {
-        this.healthIdBlockSizeThreshold = healthIdBlockSizeThreshold;
     }
 
     public void setHealthIdBlockSize(String healthIdBlockSize) {

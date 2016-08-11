@@ -13,7 +13,7 @@ configurations.all{
         force 'com.google.guava:guava:18.0', 'org.apache.httpcomponents:httpclient:4.3.5'
     }
 }
-def mainClassName = "org.sharedhealth.healthid.cassandra.Migrations"
+def mainClassName = "org.sharedhealth.healthId.cassandra.Migrations"
 
 jar {
     baseName = 'healthId-schema'

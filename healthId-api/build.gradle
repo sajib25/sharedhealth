@@ -157,13 +157,13 @@ war {
     }
 }
 
-task runhealthId(type: JavaExec) {
+task runHealthId(type: JavaExec) {
     main = mainClassName
     classpath sourceSets.main.runtimeClasspath
     environment(loadConfig())
 }
 
-task debughealthId(type: JavaExec) {
+task debugHealthId(type: JavaExec) {
     main = mainClassName
     classpath sourceSets.main.runtimeClasspath
     environment(loadConfig())

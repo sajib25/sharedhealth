@@ -24,6 +24,4 @@ public class HealthIdConfig {
         executor.setCorePoolSize(healthIdProperties.getRestPoolSize());
         return new AsyncRestTemplate(executor);
     }
-
-
 }
