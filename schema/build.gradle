@@ -17,7 +17,7 @@ def mainClassName = "org.sharedhealth.healthId.cassandra.Migrations"
 
 jar {
     baseName = 'healthId-schema'
-    version = '0.2-SNAPSHOT'
+    version = '2.5-SNAPSHOT'
     from {
         configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
