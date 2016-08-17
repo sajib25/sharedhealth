@@ -125,6 +125,32 @@ public class HealthIdControllerIT extends BaseControllerTest {
     }
 
     @Test
+    public void testGenerateRangeWithInvalidCredentials() throws Exception {
+        String invalidAccessToken = "85HoExoxghh1pislg65h9kfzcMdpYS0ixPD";
+        validClientId = "18570";
+        validEmail = "shrsystemadmin@test.com";
+
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .addFilters(springSecurityFilterChain)
+                .build();
+
+        givenThat(WireMock.get(urlEqualTo("/token/" + invalidAccessToken))
+                .willReturn(aResponse()
+                        .withStatus(401)
+                        .withHeader("Content-Type", "application/json")));
+
+        mockMvc.perform(post(API_END_POINT + GENERATE_BLOCK_URI + "?start=9800000050&totalHIDs=1000")
+                .accept(APPLICATION_JSON)
+                .header(AUTH_TOKEN_KEY, invalidAccessToken)
+                .header(FROM_KEY, validEmail)
+                .header(CLIENT_ID_KEY, validClientId)
+                .contentType(APPLICATION_JSON))
+                .andExpect(status().isUnauthorized())
+                .andReturn();
+    }
+
+    @Test
     public void testGetNextBlock() throws Exception {
         validAccessToken = "85HoExoxghh1pislg65hUM0q3wM9kfzcMdpYS0ixPD";
         validClientId = "18570";

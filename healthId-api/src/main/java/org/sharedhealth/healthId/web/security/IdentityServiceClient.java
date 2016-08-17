@@ -47,7 +47,13 @@ public class IdentityServiceClient {
         ListenableFuture<ResponseEntity<UserInfo>> listenableFuture = restTemplate.exchange(userInfoUrl,
                 HttpMethod.GET,
                 new HttpEntity(httpHeaders), UserInfo.class);
-        ResponseEntity<UserInfo> responseEntity = listenableFuture.get();
+        ResponseEntity<UserInfo> responseEntity;
+        try {
+            responseEntity = listenableFuture.get();
+        } catch (Exception e) {
+            logger.error(String.format("Error while validating client with email %s", userAuthInfo.getEmail()));
+            throw new AuthenticationServiceException("Unable to authenticate user.");
+        }
         if (!responseEntity.getStatusCode().is2xxSuccessful())
             throw new AuthenticationServiceException("Identity Server responded :" + responseEntity.getStatusCode()
                     .toString());
