@@ -3,13 +3,11 @@ package org.sharedhealth.healthId.web.repository;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 import com.datastax.driver.core.querybuilder.Select;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
 import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.config.EnvironmentMock;
-import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.healthId.web.launch.WebMvcConfig;
 import org.sharedhealth.healthId.web.utils.TestUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +16,6 @@ import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
-import rx.Observable;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -42,12 +39,6 @@ public class HealthIdRepositoryIT {
 
     @Autowired
     private HealthIdRepository healthIdRepository;
-
-    @Before
-    public void setUp() throws ExecutionException, InterruptedException {
-        cqlTemplate.execute("truncate mci_healthId");
-        healthIdRepository.resetLastReservedHealthId();
-    }
 
     @After
     public void tearDown() {
@@ -76,7 +67,7 @@ public class HealthIdRepositoryIT {
         List<MciHealthId> nextBlock = healthIdRepository.getNextBlock(2);
         MciHealthId mciHealthId = nextBlock.get(0);
         String hid = mciHealthId.getHid();
-        OrgHealthId orgHealthId = new OrgHealthId(hid, "MCI", null, null);
+        OrgHealthId orgHealthId = new OrgHealthId(hid, "MCI", null);
         healthIdRepository.saveOrgHidAndDeleteMciHid(asList(mciHealthId), asList(orgHealthId));
         assertNull(getHealthId(hid));
         assertNotNull(healthIdRepository.findOrgHealthId(hid));
@@ -84,9 +75,9 @@ public class HealthIdRepositoryIT {
 
     @Test
     public void shouldSaveAHIDForGivenOrganization() throws Exception {
-        OrgHealthId orgHealthId = new OrgHealthId("9110", "OTHER-ORG", timeBased(), null);
+        OrgHealthId orgHealthId = new OrgHealthId("9110", "OTHER-ORG", timeBased());
 
-        healthIdRepository.saveOrgHealthId(orgHealthId);
+        healthIdRepository.saveOrUpdateOrgHealthId(orgHealthId).toBlocking().first();
 
         String select = select().all().from(RepositoryConstants.CF_ORG_HEALTH_ID).toString();
         List<OrgHealthId> insertedHIDs = cqlTemplate.select(select, OrgHealthId.class);
@@ -96,10 +87,10 @@ public class HealthIdRepositoryIT {
 
     @Test
     public void shouldFindOrgHIDByGivenHID() throws Exception {
-        OrgHealthId hid = new OrgHealthId("1234", "XYZ", timeBased(), null);
-        cqlTemplate.insert(asList(hid, new OrgHealthId("1134", "ABC", timeBased(), null)));
+        OrgHealthId hid = new OrgHealthId("1234", "XYZ", timeBased());
+        cqlTemplate.insert(asList(hid, new OrgHealthId("1134", "ABC", timeBased())));
 
-        OrgHealthId orgHealthId = healthIdRepository.findOrgHealthId("1234");
+        OrgHealthId orgHealthId = healthIdRepository.findOrgHealthId("1234").toBlocking().first();
         assertEquals(hid, orgHealthId);
     }
 

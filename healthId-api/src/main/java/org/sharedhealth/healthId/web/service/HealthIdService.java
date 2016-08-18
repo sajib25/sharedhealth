@@ -16,6 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import rx.Observable;
+import rx.functions.Func1;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -105,28 +107,24 @@ public class HealthIdService {
         List<OrgHealthId> orgHealthIds = new ArrayList<>();
         UUID generatedAt = timeBased();
         for (MciHealthId mciHealthId : mciHealthIds) {
-            orgHealthIds.add(new OrgHealthId(mciHealthId.getHid(), mciCode, generatedAt, null));
+            orgHealthIds.add(new OrgHealthId(mciHealthId.getHid(), mciCode, generatedAt));
         }
         healthIdRepository.saveOrgHidAndDeleteMciHid(mciHealthIds, orgHealthIds);
         return mciHealthIds;
     }
 
-
-    @Deprecated
-    public void markMCIHealthIdUsed(MciHealthId nextMciHealthId) {
-        healthIdRepository.removedUsedHid(nextMciHealthId);
-        OrgHealthId orgHealthId = new OrgHealthId(nextMciHealthId.getHid(), MCI_ORG_CODE, null, timeBased());
-        orgHealthId.markUsed();
-        healthIdRepository.saveOrgHealthId(orgHealthId);
-    }
-
-    public OrgHealthId findOrgHealthId(String healthId) {
-        return healthIdRepository.findOrgHealthId(healthId);
-    }
-
-    public void markOrgHealthIdUsed(OrgHealthId orgHealthId) {
-        orgHealthId.markUsed();
-        healthIdRepository.saveOrgHealthId(orgHealthId);
+    public Observable<Boolean> markOrgHealthIdUsed(String healthId, final String orgCode, final UUID usedAt) {
+        Observable<OrgHealthId> orgHealthId = healthIdRepository.findOrgHealthId(healthId);
+        return orgHealthId.concatMap(new Func1<OrgHealthId, Observable<Boolean>>() {
+            @Override
+            public Observable<Boolean> call(OrgHealthId orgHealthId) {
+                if (orgCode.equals(orgHealthId.getAllocatedFor())) {
+                    orgHealthId.markUsed(usedAt);
+                    return healthIdRepository.saveOrUpdateOrgHealthId(orgHealthId);
+                }
+                return Observable.just(false);
+            }
+        });
     }
 
     private long saveIfValidMciHID(long numberOfValidHids, long currentNumber) {
@@ -145,7 +143,7 @@ public class HealthIdService {
             String newHealthId = possibleHid + checksumGenerator.generate(possibleHid.substring(1));
             if (shouldSaveHID(newHealthId)) {
                 numberOfValidHIDs += 1;
-                healthIdRepository.saveOrgHealthId(new OrgHealthId(newHealthId, orgCode, generatedAt, null));
+                healthIdRepository.saveOrUpdateOrgHealthId(new OrgHealthId(newHealthId, orgCode, generatedAt)).toBlocking().first();
                 FileUtil.addHidToFile(hidFile, newHealthId);
             }
         }
@@ -153,7 +151,7 @@ public class HealthIdService {
     }
 
     private boolean shouldSaveHID(String newHealthId) {
-        return findOrgHealthId(newHealthId) == null;
+        return healthIdRepository.findOrgHealthId(newHealthId).toBlocking().first() == null;
     }
 
     private File createFileForOrg(String orgCode) {

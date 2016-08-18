@@ -6,9 +6,9 @@ import org.cassandraunit.spring.CassandraUnit;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
 import org.junit.After;
-import org.junit.Before;
 import org.junit.Rule;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
+import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.config.EnvironmentMock;
 import org.sharedhealth.healthId.web.exception.Forbidden;
 import org.sharedhealth.healthId.web.launch.WebMvcConfig;
@@ -24,8 +24,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.Filter;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
+import static com.datastax.driver.core.utils.UUIDs.timeBased;
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 
 @WebAppConfiguration
@@ -73,25 +76,25 @@ public class BaseControllerTest {
                 .build();
     }
 
-    @Before
-    public void setupBase() throws Exception {
-        healthIdRepository.resetLastReservedHealthId();
-        createHealthIds();
-    }
-
-    private void createHealthIds() {
-        for (int i = 0; i < numberOfHealthIdsNeeded(); i++) {
+    protected void createMCIHealthIds() {
+        for (int i = 0; i < 10; i++) {
             healthIdRepository.saveMciHealthId(new MciHealthId(String.valueOf(new Date().getTime() + i)));
         }
     }
 
-    protected int numberOfHealthIdsNeeded() {
-        return 10;
+    protected List<String> createOrgHealthIds(int noOfHids, String orgCode) {
+        List<String> healthIds = new ArrayList<>();
+        for (int i = 0; i < noOfHids; i++) {
+            String healthId = String.valueOf(new Date().getTime() + i);
+            healthIdRepository.saveOrUpdateOrgHealthId(new OrgHealthId(healthId,
+                    orgCode, timeBased())).toBlocking().first();
+            healthIds.add(healthId);
+        }
+        return healthIds;
     }
 
     @After
     public void teardownBase() {
-        healthIdRepository.resetLastReservedHealthId();
         TestUtil.truncateAllColumnFamilies(cassandraOps);
     }
 

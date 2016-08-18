@@ -1,6 +1,7 @@
 package org.sharedhealth.healthId.web.repository;
 
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
 import com.datastax.driver.core.querybuilder.*;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
 import org.sharedhealth.healthId.web.Model.OrgHealthId;
@@ -11,8 +12,10 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.cassandra.core.CassandraOperations;
 import org.springframework.stereotype.Component;
 import rx.Observable;
+import rx.functions.Func1;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.sharedhealth.healthId.web.repository.RepositoryConstants.*;
 import static org.springframework.data.cassandra.core.CassandraTemplate.createDeleteQuery;
@@ -21,8 +24,6 @@ import static org.springframework.data.cassandra.core.CassandraTemplate.createIn
 @Component
 public class HealthIdRepository extends BaseRepository {
     private static final Logger logger = LoggerFactory.getLogger(HealthIdRepository.class);
-    public static final int BLOCK_SIZE = 10000;
-    private String lastTakenHidMarker;
 
     @Autowired
     public HealthIdRepository(@Qualifier("HealthIdCassandraTemplate") CassandraOperations cassandraOps) {
@@ -35,10 +36,12 @@ public class HealthIdRepository extends BaseRepository {
         return Observable.from(cassandraOps.executeAsynchronously(insertQuery.ifNotExists()));
     }
 
-    public void saveOrgHealthId(OrgHealthId orgHealthId) {
+    public Observable<Boolean> saveOrUpdateOrgHealthId(OrgHealthId orgHealthId) {
         logger.debug(String.format("Assigining %s Health Id for Organization %s", orgHealthId.getHealthId(), orgHealthId.getAllocatedFor()));
         Insert insertQuery = getInsertQuery(orgHealthId);
-        Observable.from(cassandraOps.executeAsynchronously(insertQuery)).toBlocking().first();
+        return Observable.from(cassandraOps.executeAsynchronously(insertQuery)).flatMap(
+                RxMaps.respondOnNext(true),
+                RxMaps.<Boolean>logAndForwardError(logger), RxMaps.<Boolean>completeResponds());
     }
 
     public List<MciHealthId> getNextBlock(int blockSize) {
@@ -48,20 +51,6 @@ public class HealthIdRepository extends BaseRepository {
 
         return cassandraOps.select(nextBlockQuery, MciHealthId.class);
     }
-
-    public void resetLastReservedHealthId() {
-        lastTakenHidMarker = null;
-    }
-
-    @Deprecated
-    public void removedUsedHid(MciHealthId nextMciHealthId) {
-//        cassandraOps.deleteAsynchronously(nextMciHealthId);
-    }
-
-//    public void deleteHealthBlock(List<MciHealthId> allocatedHID) {
-//
-//        cassandraOps.delete(allocatedHID);
-//    }
 
     private Insert getInsertQuery(MciHealthId mciHealthId) {
         return createInsertQuery(CF_MCI_HEALTH_ID, mciHealthId, null, cassandraOps.getConverter());
@@ -75,10 +64,25 @@ public class HealthIdRepository extends BaseRepository {
         return createDeleteQuery(CF_MCI_HEALTH_ID, mciHealthId, null, cassandraOps.getConverter());
     }
 
-    public OrgHealthId findOrgHealthId(String healthId) {
+    public Observable<OrgHealthId> findOrgHealthId(String healthId) {
         Select selectHealthId = QueryBuilder.select().from(CF_ORG_HEALTH_ID).where(QueryBuilder.eq(HEALTH_ID, healthId)).limit(1);
-        List<OrgHealthId> orgHealthIds = cassandraOps.select(selectHealthId, OrgHealthId.class);
-        return orgHealthIds.isEmpty() ? null : orgHealthIds.get(0);
+        return Observable.from(cassandraOps.executeAsynchronously(selectHealthId)).flatMap(
+                new Func1<ResultSet, Observable<OrgHealthId>>() {
+                    @Override
+                    public Observable<OrgHealthId> call(ResultSet resultSet) {
+                        if (resultSet.isExhausted()) {
+                            return Observable.just(null);
+                        }
+                        Row one = resultSet.one();
+                        String healthId = one.getString("health_id");
+                        String allocatedFor = one.getString("allocated_for");
+                        UUID generatedAt = one.getUUID("generated_at");
+                        Boolean isUsed = one.getBool("is_used");
+                        UUID usedAt = one.getUUID("used_at");
+
+                        return Observable.just(new OrgHealthId(healthId, allocatedFor, generatedAt, isUsed, usedAt));
+                    }
+                });
     }
 
     public void saveOrgHidAndDeleteMciHid(final List<MciHealthId> mciHealthId, final List<OrgHealthId> orgHealthId) {

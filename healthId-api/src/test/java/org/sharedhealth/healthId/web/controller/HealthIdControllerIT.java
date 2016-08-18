@@ -16,25 +16,21 @@ import org.springframework.web.context.WebApplicationContext;
 
 import javax.servlet.Filter;
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.givenThat;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static com.datastax.driver.core.utils.UUIDs.timeBased;
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_ALL_URI;
-import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_BLOCK_FOR_ORG_URI;
-import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_BLOCK_URI;
+import static org.sharedhealth.healthId.web.controller.HealthIdController.*;
 import static org.sharedhealth.healthId.web.utils.FileUtil.asString;
-import static org.sharedhealth.healthId.web.utils.HttpUtil.AUTH_TOKEN_KEY;
-import static org.sharedhealth.healthId.web.utils.HttpUtil.CLIENT_ID_KEY;
-import static org.sharedhealth.healthId.web.utils.HttpUtil.FROM_KEY;
+import static org.sharedhealth.healthId.web.utils.HttpUtil.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -156,6 +152,8 @@ public class HealthIdControllerIT extends BaseControllerTest {
         validClientId = "18570";
         validEmail = "shrsystemadmin@test.com";
 
+        createMCIHealthIds();
+
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
                 .addFilters(springSecurityFilterChain)
@@ -189,6 +187,8 @@ public class HealthIdControllerIT extends BaseControllerTest {
         validAccessToken = "85HoExoxghh1pislg65hUM0q3wM9kfzcMdpYS0ixPD";
         validClientId = "18570";
         validEmail = "shrsystemadmin@test.com";
+
+        createMCIHealthIds();
 
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
@@ -307,5 +307,72 @@ public class HealthIdControllerIT extends BaseControllerTest {
                 .andExpect(status().isOk())
                 .andReturn();
 
+    }
+
+    @Test
+    public void testMarkUsed() throws Exception {
+        validAccessToken = "85HoExoxghh1pislg65hUM0q3wM9kfzcMdpYS0ixPD";
+        validClientId = "18570";
+        validEmail = "shrsystemadmin@test.com";
+
+        String orgCode = "mci1";
+        String healthId = createOrgHealthIds(1, orgCode).get(0);
+
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .addFilters(springSecurityFilterChain)
+                .build();
+
+
+        givenThat(WireMock.get(urlEqualTo("/token/" + validAccessToken))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(asString("jsons/userDetails/userDetailForSHRSystemAdmin.json"))));
+        HashMap<String, String> map = new HashMap<>();
+        map.put("orgCode", orgCode);
+        map.put("usedAt", timeBased().toString());
+        String content = new ObjectMapper().writeValueAsString(map);
+
+        mockMvc.perform(put(API_END_POINT + "/markUsed/" + healthId)
+                .header(AUTH_TOKEN_KEY, validAccessToken)
+                .header(FROM_KEY, validEmail)
+                .header(CLIENT_ID_KEY, validClientId)
+                .content(content)
+                .contentType(APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andReturn();
+    }
+
+    @Test
+    public void markUsedShouldFailForNonShrSystemAdmins() throws Exception {
+        validAccessToken = "40214a6c-e27c-4223-981c-1f837be90f02";
+        validClientId = "18548";
+        validEmail = "facility@gmail.com";
+
+        String orgCode = "mci1";
+
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .addFilters(springSecurityFilterChain)
+                .build();
+
+
+        givenThat(WireMock.get(urlEqualTo("/token/" + validAccessToken))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(asString("jsons/userDetails/userDetailForFacility.json"))));
+
+        HashMap<String, String> map = new HashMap<>();
+
+        mockMvc.perform(put(API_END_POINT + "/markUsed/1234")
+                .header(AUTH_TOKEN_KEY, validAccessToken)
+                .header(FROM_KEY, validEmail)
+                .header(CLIENT_ID_KEY, validClientId)
+                .content("{}")
+                .contentType(APPLICATION_JSON))
+                .andExpect(status().isForbidden())
+                .andReturn();
     }
 }

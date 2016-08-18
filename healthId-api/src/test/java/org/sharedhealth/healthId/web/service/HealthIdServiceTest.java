@@ -7,7 +7,6 @@ import org.hamcrest.TypeSafeMatcher;
 import org.joda.time.DateTime;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
@@ -22,6 +21,7 @@ import org.sharedhealth.healthId.web.repository.HealthIdRepository;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.sharedhealth.healthId.web.security.UserProfile;
 import org.sharedhealth.healthId.web.utils.LuhnChecksumGenerator;
+import rx.Observable;
 
 import java.io.File;
 import java.util.*;
@@ -420,17 +420,19 @@ public class HealthIdServiceTest {
         testProperties.setHidStoragePath("test-hid");
 
         when(checksumGenerator.generate(any(String.class))).thenReturn(1);
+        when(healthIdRepository.saveOrUpdateOrgHealthId(any(OrgHealthId.class))).thenReturn(Observable.just(true));
+        when(healthIdRepository.findOrgHealthId(anyString())).thenReturn(Observable.<OrgHealthId>just(null));
 
         HealthIdService healthIdService = new HealthIdService(testProperties, healthIdRepository, checksumGenerator, generatedHidBlockService);
         healthIdService.generateBlockForOrg(start, totalHIDs, orgCode, getUserInfo());
 
-        verify(healthIdRepository, times(100)).saveOrgHealthId(any(OrgHealthId.class));
+        verify(healthIdRepository, times(100)).saveOrUpdateOrgHealthId(any(OrgHealthId.class));
         verify(checksumGenerator, times(100)).generate(anyString());
 
-        verify(healthIdRepository, times(1)).saveOrgHealthId(argThat(orgHID("100001", orgCode)));
-        verify(healthIdRepository, never()).saveOrgHealthId(argThat(orgHID("100401", orgCode)));
-        verify(healthIdRepository, never()).saveOrgHealthId(argThat(orgHID("100501", orgCode)));
-        verify(healthIdRepository, times(1)).saveOrgHealthId(argThat(orgHID("101191", orgCode)));
+        verify(healthIdRepository, times(1)).saveOrUpdateOrgHealthId(argThat(orgHID("100001", orgCode)));
+        verify(healthIdRepository, never()).saveOrUpdateOrgHealthId(argThat(orgHID("100401", orgCode)));
+        verify(healthIdRepository, never()).saveOrUpdateOrgHealthId(argThat(orgHID("100501", orgCode)));
+        verify(healthIdRepository, times(1)).saveOrUpdateOrgHealthId(argThat(orgHID("101191", orgCode)));
     }
 
     Matcher<OrgHealthId> orgHID(final String healthId, final String orgCode) {
@@ -456,11 +458,13 @@ public class HealthIdServiceTest {
         testProperties.setHidStoragePath("test-hid");
 
         when(checksumGenerator.generate(any(String.class))).thenReturn(1);
+        when(healthIdRepository.saveOrUpdateOrgHealthId(any(OrgHealthId.class))).thenReturn(Observable.just(true));
+        when(healthIdRepository.findOrgHealthId(anyString())).thenReturn(Observable.<OrgHealthId>just(null));
 
         HealthIdService healthIdService = new HealthIdService(testProperties, healthIdRepository, checksumGenerator, generatedHidBlockService);
         healthIdService.generateBlockForOrg(start, totalHIDs, orgCode, getUserInfo());
 
-        verify(healthIdRepository, times(100)).saveOrgHealthId(any(OrgHealthId.class));
+        verify(healthIdRepository, times(100)).saveOrUpdateOrgHealthId(any(OrgHealthId.class));
         verify(checksumGenerator, times(100)).generate(anyString());
         ArgumentCaptor<GeneratedHIDBlock> argument = ArgumentCaptor.forClass(GeneratedHIDBlock.class);
         verify(generatedHidBlockService, times(1)).saveGeneratedHidBlock(argument.capture());
@@ -484,50 +488,18 @@ public class HealthIdServiceTest {
         testProperties.setHidStoragePath("test-hid");
 
         when(checksumGenerator.generate(any(String.class))).thenReturn(1);
-        when(healthIdRepository.findOrgHealthId(anyString())).thenReturn(null, new OrgHealthId("100011", "XYZ", any(UUID.class), null), null);
+        when(healthIdRepository.saveOrUpdateOrgHealthId(any(OrgHealthId.class))).thenReturn(Observable.just(true));
+        when(healthIdRepository.findOrgHealthId(anyString())).thenReturn(Observable.<OrgHealthId>just(null),
+                Observable.just(new OrgHealthId("100011", "XYZ", any(UUID.class))),
+                Observable.<OrgHealthId>just(null));
 
         HealthIdService healthIdService = new HealthIdService(testProperties, healthIdRepository, checksumGenerator, generatedHidBlockService);
         healthIdService.generateBlockForOrg(start, totalHIDs, orgCode, getUserInfo());
 
         verify(healthIdRepository, times(101)).findOrgHealthId(anyString());
         verify(checksumGenerator, times(101)).generate(anyString());
-        verify(healthIdRepository, times(100)).saveOrgHealthId(any(OrgHealthId.class));
+        verify(healthIdRepository, times(100)).saveOrUpdateOrgHealthId(any(OrgHealthId.class));
 
-    }
-
-    @Ignore
-    @Test
-    public void shouldMarkMCIHidUsed() {
-        String hid = "898998";
-        MciHealthId MciHealthId = new MciHealthId(hid);
-        doNothing().when(healthIdRepository).removedUsedHid(any(MciHealthId.class));
-        HealthIdService healthIdService = new HealthIdService(healthIdProperties, healthIdRepository, checksumGenerator, generatedHidBlockService);
-        healthIdService.markMCIHealthIdUsed(MciHealthId);
-        verify(healthIdRepository).removedUsedHid(MciHealthId);
-
-        ArgumentCaptor<OrgHealthId> captor = ArgumentCaptor.forClass(OrgHealthId.class);
-        verify(healthIdRepository, times(1)).saveOrgHealthId(captor.capture());
-
-        OrgHealthId captorValue = captor.getValue();
-        assertEquals(hid, captorValue.getHealthId());
-        assertEquals(MCI_ORG_CODE, captorValue.getAllocatedFor());
-        assertTrue(captorValue.isUsed());
-    }
-
-    @Test
-    public void shouldMarkOrgHIDAsUsed() throws Exception {
-        OrgHealthId orgHealthId = new OrgHealthId("1234", "OTHER", timeBased(), null);
-        HealthIdService healthIdService = new HealthIdService(healthIdProperties, healthIdRepository, checksumGenerator, generatedHidBlockService);
-
-        assertFalse(orgHealthId.isUsed());
-        assertNull(orgHealthId.getUsedAt());
-        healthIdService.markOrgHealthIdUsed(orgHealthId);
-
-        ArgumentCaptor<OrgHealthId> captor = ArgumentCaptor.forClass(OrgHealthId.class);
-        verify(healthIdRepository, times(1)).saveOrgHealthId(captor.capture());
-
-        assertTrue(orgHealthId.isUsed());
-        assertNotNull(orgHealthId.getUsedAt());
     }
 
     private UserInfo getUserInfo() {

@@ -6,7 +6,6 @@ import org.springframework.data.cassandra.mapping.Table;
 
 import java.util.UUID;
 
-import static com.datastax.driver.core.utils.UUIDs.timeBased;
 import static org.sharedhealth.healthId.web.repository.RepositoryConstants.*;
 import static org.springframework.cassandra.core.PrimaryKeyType.PARTITIONED;
 
@@ -29,13 +28,19 @@ public class OrgHealthId {
     @Column(IS_USED)
     private boolean isUsed;
 
+    public OrgHealthId() {
+    }
 
-    public OrgHealthId(String healthId, String allocatedFor, UUID generatedAt, UUID usedAt) {
+    public OrgHealthId(String healthId, String allocatedFor, UUID generatedAt) {
+        this(healthId, allocatedFor, generatedAt, Boolean.FALSE, null);
+    }
+
+    public OrgHealthId(String healthId, String allocatedFor, UUID generatedAt, Boolean isUsed, UUID usedAt) {
         this.healthId = healthId;
         this.allocatedFor = allocatedFor;
         this.generatedAt = generatedAt;
+        this.isUsed = isUsed;
         this.usedAt = usedAt;
-        this.isUsed = false;
     }
 
     public String getHealthId() {
@@ -54,9 +59,9 @@ public class OrgHealthId {
         return isUsed;
     }
 
-    public void markUsed() {
+    public void markUsed(UUID usedAt) {
         this.isUsed = Boolean.TRUE;
-        this.usedAt = timeBased();
+        this.usedAt = usedAt;
     }
 
     public void setUsedAt(UUID uuid) {

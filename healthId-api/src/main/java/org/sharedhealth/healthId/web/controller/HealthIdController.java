@@ -15,19 +15,13 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
+import rx.functions.Action1;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.*;
 
 @RestController
 @RequestMapping("/healthIds")
@@ -108,6 +102,32 @@ public class HealthIdController extends BaseController {
         });
         responseMap.put("hids", hids);
         return responseMap;
+    }
+
+    @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
+    @RequestMapping(method = PUT, value = "/markUsed/{healthId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
+    public DeferredResult<Boolean> markUsed(@PathVariable(value = "healthId") String healthId,
+                                            @RequestBody Map responseBody) throws JsonProcessingException {
+        final DeferredResult<Boolean> deferredResult = new DeferredResult<>();
+        String usedAt = (String) responseBody.get("usedAt");
+        String orgCode = (String) responseBody.get("orgCode");
+        rx.Observable<Boolean> observable = healthIdService.markOrgHealthIdUsed(healthId, orgCode, UUID.fromString(usedAt));
+        observable.subscribe(new Action1<Boolean>() {
+            @Override
+            public void call(Boolean aBoolean) {
+                deferredResult.setResult(aBoolean);
+            }
+        }, errorCallback(deferredResult));
+        return deferredResult;
+    }
+
+    private Action1<Throwable> errorCallback(final DeferredResult<Boolean> deferredResult) {
+        return new Action1<Throwable>() {
+            @Override
+            public void call(Throwable error) {
+                deferredResult.setErrorResult(error);
+            }
+        };
     }
 
     private DeferredResult<String> getResult(GeneratedHIDBlock generatedHIDBlock, long totalHIDs) {
