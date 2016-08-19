@@ -60,7 +60,7 @@ public class HealthIdServiceIT {
         String orgCode = "mci1";
         createOrgHealthIds(healthId, orgCode);
         UUID usedAt = timeBased();
-        healthIdService.markOrgHealthIdUsed(healthId, orgCode, usedAt).toBlocking().last();
+        healthIdService.markOrgHealthIdUsed(healthId, usedAt).toBlocking().last();
 
         OrgHealthId savedOrgHealthId = healthIdRepository.findOrgHealthId(healthId).toBlocking().first();
         assertTrue(savedOrgHealthId.isUsed());

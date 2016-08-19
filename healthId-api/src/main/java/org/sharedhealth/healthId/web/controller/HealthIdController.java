@@ -107,15 +107,14 @@ public class HealthIdController extends BaseController {
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
     @RequestMapping(method = PUT, value = "/markUsed/{healthId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public DeferredResult<String> markUsed(@PathVariable(value = "healthId") String healthId,
-                                            @RequestBody Map responseBody) throws JsonProcessingException {
+                                           @RequestBody Map responseBody) throws JsonProcessingException {
         final DeferredResult<String> deferredResult = new DeferredResult<>();
         String usedAt = (String) responseBody.get("used_at");
-        String orgCode = (String) responseBody.get("org_code");
-        rx.Observable<Boolean> observable = healthIdService.markOrgHealthIdUsed(healthId, orgCode, UUID.fromString(usedAt));
+        rx.Observable<Boolean> observable = healthIdService.markOrgHealthIdUsed(healthId, UUID.fromString(usedAt));
         observable.subscribe(new Action1<Boolean>() {
             @Override
             public void call(Boolean aBoolean) {
-                if(aBoolean)
+                if (aBoolean)
                     deferredResult.setResult("Accepted");
                 else
                     deferredResult.setErrorResult(new InvalidRequestException("Rejected"));

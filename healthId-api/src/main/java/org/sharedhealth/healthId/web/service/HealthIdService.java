@@ -7,10 +7,8 @@ import org.sharedhealth.healthId.web.Model.MciHealthId;
 import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.Model.RequesterDetails;
 import org.sharedhealth.healthId.web.config.HealthIdProperties;
-import org.sharedhealth.healthId.web.exception.HealthIdConflictException;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.healthId.web.exception.HealthIdNotFoundException;
-import org.sharedhealth.healthId.web.exception.InvalidRequestException;
 import org.sharedhealth.healthId.web.repository.HealthIdRepository;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.sharedhealth.healthId.web.utils.FileUtil;
@@ -18,7 +16,6 @@ import org.sharedhealth.healthId.web.utils.LuhnChecksumGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.crossstore.ChangeSetPersister;
 import org.springframework.stereotype.Component;
 import rx.Observable;
 import rx.functions.Func1;
@@ -117,19 +114,16 @@ public class HealthIdService {
         return mciHealthIds;
     }
 
-    public Observable<Boolean> markOrgHealthIdUsed(String healthId, final String orgCode, final UUID usedAt) {
+    public Observable<Boolean> markOrgHealthIdUsed(String healthId, final UUID usedAt) {
         Observable<OrgHealthId> orgHealthId = healthIdRepository.findOrgHealthId(healthId);
         return orgHealthId.concatMap(new Func1<OrgHealthId, Observable<Boolean>>() {
             @Override
             public Observable<Boolean> call(OrgHealthId orgHealthId) {
-                if(null == orgHealthId) {
+                if (null == orgHealthId) {
                     return Observable.error(new HealthIdNotFoundException("Health Id not allocated to any Organization."));
                 }
-                if (orgCode.equals(orgHealthId.getAllocatedFor())) {
-                    orgHealthId.markUsed(usedAt);
-                    return healthIdRepository.saveOrUpdateOrgHealthId(orgHealthId);
-                }
-                return Observable.error(new HealthIdConflictException("Health Id allocated to different Organization."));
+                orgHealthId.markUsed(usedAt);
+                return healthIdRepository.saveOrUpdateOrgHealthId(orgHealthId);
             }
         });
     }

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import org.sharedhealth.healthId.web.exception.Forbidden;
-import org.sharedhealth.healthId.web.exception.HealthIdConflictException;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.healthId.web.exception.HealthIdNotFoundException;
 import org.sharedhealth.healthId.web.security.UserInfo;
@@ -56,14 +55,6 @@ public class BaseController {
     public ErrorInfo forbidden(Forbidden forbidden) {
         logger.error(forbidden.getMessage());
         return new ErrorInfo(HttpStatus.FORBIDDEN.value(), forbidden.getMessage());
-    }
-
-    @ResponseStatus(value = HttpStatus.CONFLICT)
-    @ResponseBody
-    @ExceptionHandler(HealthIdConflictException.class)
-    public ErrorInfo healthIdConflict(HealthIdConflictException exception) {
-        logger.error(exception.getMessage());
-        return new ErrorInfo(HttpStatus.CONFLICT.value(), exception.getMessage());
     }
 
     @ResponseStatus(value = HttpStatus.NOT_FOUND)
