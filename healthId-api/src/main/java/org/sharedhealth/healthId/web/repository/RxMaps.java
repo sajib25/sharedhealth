@@ -26,11 +26,10 @@ public class RxMaps {
         };
     }
 
-    public static <T> Func1<Throwable, Observable<? extends T>> logAndForwardError(final Logger log) {
+    public static <T> Func1<Throwable, Observable<? extends T>> forwardError() {
         return new Func1<Throwable, Observable<? extends T>>() {
             @Override
             public Observable<? extends T> call(Throwable throwable) {
-                log.error(throwable.getMessage());
                 return Observable.error(throwable);
             }
         };

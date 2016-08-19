@@ -4,21 +4,19 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import org.sharedhealth.healthId.web.exception.Forbidden;
+import org.sharedhealth.healthId.web.exception.HealthIdConflictException;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
+import org.sharedhealth.healthId.web.exception.HealthIdNotFoundException;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_EMPTY;
@@ -60,12 +58,28 @@ public class BaseController {
         return new ErrorInfo(HttpStatus.FORBIDDEN.value(), forbidden.getMessage());
     }
 
+    @ResponseStatus(value = HttpStatus.CONFLICT)
+    @ResponseBody
+    @ExceptionHandler(HealthIdConflictException.class)
+    public ErrorInfo healthIdConflict(HealthIdConflictException exception) {
+        logger.error(exception.getMessage());
+        return new ErrorInfo(HttpStatus.CONFLICT.value(), exception.getMessage());
+    }
+
+    @ResponseStatus(value = HttpStatus.NOT_FOUND)
+    @ResponseBody
+    @ExceptionHandler(HealthIdNotFoundException.class)
+    public ErrorInfo healthIdNotFound(HealthIdNotFoundException exception) {
+        logger.error(exception.getMessage());
+        return new ErrorInfo(HttpStatus.NOT_FOUND.value(), exception.getMessage());
+    }
+
     @ResponseStatus(value = INTERNAL_SERVER_ERROR)
     @ExceptionHandler(Exception.class)
     @ResponseBody
     public ErrorInfo handleException(Exception e) {
-        logger.error("Handling generic exception. ", e);
-        return new ErrorInfo(INTERNAL_SERVER_ERROR.value(), "internal.server.error");
+        logger.error(e.getMessage());
+        return new ErrorInfo(INTERNAL_SERVER_ERROR.value(), e.getLocalizedMessage());
     }
 
     @JsonRootName(value = "error")

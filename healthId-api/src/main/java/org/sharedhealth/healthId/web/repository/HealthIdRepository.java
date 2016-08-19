@@ -41,7 +41,7 @@ public class HealthIdRepository extends BaseRepository {
         Insert insertQuery = getInsertQuery(orgHealthId);
         return Observable.from(cassandraOps.executeAsynchronously(insertQuery)).flatMap(
                 RxMaps.respondOnNext(true),
-                RxMaps.<Boolean>logAndForwardError(logger), RxMaps.<Boolean>completeResponds());
+                RxMaps.<Boolean>forwardError(), RxMaps.<Boolean>completeResponds());
     }
 
     public List<MciHealthId> getNextBlock(int blockSize) {

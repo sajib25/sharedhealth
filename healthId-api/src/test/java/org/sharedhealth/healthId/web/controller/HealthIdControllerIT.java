@@ -330,8 +330,8 @@ public class HealthIdControllerIT extends BaseControllerTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(asString("jsons/userDetails/userDetailForSHRSystemAdmin.json"))));
         HashMap<String, String> map = new HashMap<>();
-        map.put("orgCode", orgCode);
-        map.put("usedAt", timeBased().toString());
+        map.put("org_code", orgCode);
+        map.put("used_at", timeBased().toString());
         String content = new ObjectMapper().writeValueAsString(map);
 
         mockMvc.perform(put(API_END_POINT + "/markUsed/" + healthId)

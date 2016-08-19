@@ -106,25 +106,29 @@ public class HealthIdController extends BaseController {
 
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
     @RequestMapping(method = PUT, value = "/markUsed/{healthId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
-    public DeferredResult<Boolean> markUsed(@PathVariable(value = "healthId") String healthId,
+    public DeferredResult<String> markUsed(@PathVariable(value = "healthId") String healthId,
                                             @RequestBody Map responseBody) throws JsonProcessingException {
-        final DeferredResult<Boolean> deferredResult = new DeferredResult<>();
-        String usedAt = (String) responseBody.get("usedAt");
-        String orgCode = (String) responseBody.get("orgCode");
+        final DeferredResult<String> deferredResult = new DeferredResult<>();
+        String usedAt = (String) responseBody.get("used_at");
+        String orgCode = (String) responseBody.get("org_code");
         rx.Observable<Boolean> observable = healthIdService.markOrgHealthIdUsed(healthId, orgCode, UUID.fromString(usedAt));
         observable.subscribe(new Action1<Boolean>() {
             @Override
             public void call(Boolean aBoolean) {
-                deferredResult.setResult(aBoolean);
+                if(aBoolean)
+                    deferredResult.setResult("Accepted");
+                else
+                    deferredResult.setErrorResult(new InvalidRequestException("Rejected"));
             }
         }, errorCallback(deferredResult));
         return deferredResult;
     }
 
-    private Action1<Throwable> errorCallback(final DeferredResult<Boolean> deferredResult) {
+    private Action1<Throwable> errorCallback(final DeferredResult<String> deferredResult) {
         return new Action1<Throwable>() {
             @Override
             public void call(Throwable error) {
+                logger.error(error.getMessage());
                 deferredResult.setErrorResult(error);
             }
         };
