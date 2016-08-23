@@ -25,6 +25,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.givenThat;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
 import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_ALL_URI;
@@ -324,7 +325,7 @@ public class HealthIdControllerIT extends BaseControllerTest {
         validEmail = "shrsystemadmin@test.com";
 
         String orgCode = "mci1";
-        String healthId = createOrgHealthIds(1, orgCode).get(0);
+        String healthId = createOrgHealthIds(1, orgCode, false).get(0);
 
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
@@ -399,7 +400,7 @@ public class HealthIdControllerIT extends BaseControllerTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(asString("jsons/userDetails/userDetailForFacility.json"))));
 
-        mockMvc.perform(get(API_END_POINT + "/isUsable/1234")
+        mockMvc.perform(get(API_END_POINT + "/checkAvailability/1234")
                 .param("orgCode", orgCode)
                 .header(AUTH_TOKEN_KEY, validAccessToken)
                 .header(FROM_KEY, validEmail)
@@ -409,13 +410,13 @@ public class HealthIdControllerIT extends BaseControllerTest {
     }
 
     @Test
-    public void testHealthIdIsUsableByShrSystemAdmin() throws Exception {
+    public void testHealthIdAvailability() throws Exception {
         validAccessToken = "85HoExoxghh1pislg65hUM0q3wM9kfzcMdpYS0ixPD";
         validClientId = "18570";
         validEmail = "shrsystemadmin@test.com";
 
         String orgCode = "mci1";
-        String healthId = createOrgHealthIds(1, orgCode).get(0);
+        String validHealthId = createOrgHealthIds(1, orgCode, false).get(0);
 
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
@@ -428,7 +429,32 @@ public class HealthIdControllerIT extends BaseControllerTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(asString("jsons/userDetails/userDetailForSHRSystemAdmin.json"))));
 
-        mockMvc.perform(get(API_END_POINT + "/isUsable/" + healthId)
+        MvcResult mvcResult = mockCheckAvailability(orgCode, validHealthId);
+        assertTrue((Boolean) convertAsyncResultToMap(mvcResult).get("availability"));
+
+        String invalidHealthId = "aljkfdlk32";
+        mvcResult = mockCheckAvailability(orgCode, invalidHealthId);
+        assertFalse((Boolean) convertAsyncResultToMap(mvcResult).get("availability"));
+
+        String invalidOrgCode = "mci3";
+        mvcResult = mockCheckAvailability(invalidOrgCode, validHealthId);
+        assertFalse((Boolean) convertAsyncResultToMap(mvcResult).get("availability"));
+
+        String usedHealthId = createOrgHealthIds(1, orgCode, true).get(0);
+        mvcResult = mockCheckAvailability(orgCode, usedHealthId);
+        assertFalse((Boolean) convertAsyncResultToMap(mvcResult).get("availability"));
+    }
+
+    private Map convertAsyncResultToMap(MvcResult mvcResult) throws java.io.IOException {
+        String asyncResult;
+        Map map;
+        asyncResult = (String) mvcResult.getAsyncResult();
+        map = new ObjectMapper().readValue(asyncResult, Map.class);
+        return map;
+    }
+
+    private MvcResult mockCheckAvailability(String orgCode, String healthId) throws Exception {
+        return mockMvc.perform(get(API_END_POINT + "/checkAvailability/" + healthId)
                 .param("orgCode", orgCode)
                 .header(AUTH_TOKEN_KEY, validAccessToken)
                 .header(FROM_KEY, validEmail)

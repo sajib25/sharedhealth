@@ -68,22 +68,6 @@ public class HealthIdServiceIT {
         assertEquals(usedAt, savedOrgHealthId.getUsedAt());
     }
 
-    @Test
-    public void shouldCheckIfOrgHealthIdIsAllocatedToValidOrgAndUnused() throws Exception {
-        String validOrgCode = "org1";
-        String unUsedHealthId = "12";
-        createOrgHealthIds(unUsedHealthId, validOrgCode);
-        String usedHealthId = "123";
-        createOrgHealthIds(usedHealthId, validOrgCode);
-        healthIdService.markOrgHealthIdUsed(usedHealthId, timeBased()).toBlocking().first();
-
-        assertTrue(healthIdService.isAllocatedAndUnused(unUsedHealthId, validOrgCode).toBlocking().first());
-
-        assertFalse(healthIdService.isAllocatedAndUnused(unUsedHealthId, "org2").toBlocking().first());
-
-        assertFalse(healthIdService.isAllocatedAndUnused(usedHealthId, validOrgCode).toBlocking().first());
-    }
-
     private void createHealthIds(long prefix, int numberOfHids) {
         for (int i = 0; i < numberOfHids; i++) {
             MciHealthId mciHealthId = new MciHealthId(String.valueOf(prefix + i));

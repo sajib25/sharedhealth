@@ -82,12 +82,14 @@ public class BaseControllerTest {
         }
     }
 
-    protected List<String> createOrgHealthIds(int noOfHids, String orgCode) {
+    protected List<String> createOrgHealthIds(int noOfHids, String orgCode, Boolean isUsed) {
         List<String> healthIds = new ArrayList<>();
         for (int i = 0; i < noOfHids; i++) {
             String healthId = String.valueOf(new Date().getTime() + i);
-            healthIdRepository.saveOrUpdateOrgHealthId(new OrgHealthId(healthId,
-                    orgCode, timeBased())).toBlocking().first();
+            OrgHealthId orgHealthId = new OrgHealthId(healthId,
+                    orgCode, timeBased());
+            if (isUsed) orgHealthId.markUsed(timeBased());
+            healthIdRepository.saveOrUpdateOrgHealthId(orgHealthId).toBlocking().first();
             healthIds.add(healthId);
         }
         return healthIds;

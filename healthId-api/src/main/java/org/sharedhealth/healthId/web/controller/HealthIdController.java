@@ -1,10 +1,12 @@
 package org.sharedhealth.healthId.web.controller;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Transformer;
 import org.sharedhealth.healthId.web.Model.GeneratedHIDBlock;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
+import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.config.HealthIdProperties;
 import org.sharedhealth.healthId.web.exception.InvalidRequestException;
 import org.sharedhealth.healthId.web.security.UserInfo;
@@ -38,6 +40,7 @@ public class HealthIdController extends BaseController {
     private HealthIdService healthIdService;
     private FacilityService facilityService;
     private HealthIdProperties healthIdProperties;
+    private ObjectMapper objectMapper;
 
     @Autowired
     public HealthIdController(HealthIdService healthIdService, FacilityService facilityService, HealthIdProperties healthIdProperties) {
@@ -126,15 +129,32 @@ public class HealthIdController extends BaseController {
     }
 
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
-    @RequestMapping(method = GET, value = "/isUsable/{healthId}")
-    public DeferredResult<Boolean> isUsable(@PathVariable(value = "healthId") String healthId,
-                                            @RequestParam(value = "orgCode", required = true) String orgCode) {
-        final DeferredResult<Boolean> deferredResult = new DeferredResult<>();
-        rx.Observable<Boolean> observable = healthIdService.isAllocatedAndUnused(healthId, orgCode);
-        observable.subscribe(new Action1<Boolean>() {
+    @RequestMapping(method = GET, value = "/checkAvailability/{healthId}")
+    public DeferredResult<String> checkAvailability(@PathVariable(value = "healthId") String healthId,
+                                           @RequestParam(value = "orgCode", required = true) final String orgCode) {
+        final DeferredResult<String> deferredResult = new DeferredResult<>();
+        rx.Observable<OrgHealthId> observable = healthIdService.findOrgHealthId(healthId);
+        observable.subscribe(new Action1<OrgHealthId>() {
             @Override
-            public void call(Boolean aBoolean) {
-                deferredResult.setResult(aBoolean);
+            public void call(OrgHealthId orgHealthId) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("availability", false);
+                if (orgHealthId == null) {
+                    map.put("reason", "Health Id is allocated to another organization.");
+                } else if (orgHealthId.isUsed()) {
+                    map.put("reason", "Health Id is already allocated to another patient.");
+                } else if (!orgCode.equals(orgHealthId.getAllocatedFor())) {
+                    map.put("reason", "Health Id is allocated to another organization.");
+                } else {
+                    map.put("availability", true);
+                }
+                try {
+                    objectMapper = new ObjectMapper();
+                    deferredResult.setResult(objectMapper.writeValueAsString(map));
+                } catch (JsonProcessingException e) {
+                    logger.error("Parsing exception");
+                    deferredResult.setErrorResult(e);
+                }
             }
         }, errorCallback(deferredResult));
         return deferredResult;

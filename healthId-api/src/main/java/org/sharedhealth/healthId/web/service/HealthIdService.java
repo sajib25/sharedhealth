@@ -204,15 +204,7 @@ public class HealthIdService {
         return Long.parseLong(String.valueOf(startPrefix + startSuffix.replaceAll(".", "0")));
     }
 
-    public Observable<Boolean> isAllocatedAndUnused(String healthId, final String orgCode) {
-        Observable<OrgHealthId> orgHealthId = healthIdRepository.findOrgHealthId(healthId);
-        return orgHealthId.concatMap(new Func1<OrgHealthId, Observable<Boolean>>() {
-            @Override
-            public Observable<Boolean> call(OrgHealthId orgHealthId) {
-                if (orgHealthId != null && !orgHealthId.isUsed() && orgCode.equals(orgHealthId.getAllocatedFor()))
-                    return Observable.just(true);
-                return Observable.just(false);
-            }
-        });
+    public Observable<OrgHealthId> findOrgHealthId(String healthId) {
+          return healthIdRepository.findOrgHealthId(healthId);
     }
 }
