@@ -133,11 +133,11 @@ public class HealthIdController extends BaseController {
 
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
     @RequestMapping(method = GET, value = "/checkAvailability/{healthId}")
-    public DeferredResult<String> checkAvailability(@PathVariable(value = "healthId") String healthId,
-                                           @RequestParam(value = "orgCode", required = true) final String orgCode) {
+    public DeferredResult<Map> checkAvailability(@PathVariable(value = "healthId") String healthId,
+                                                 @RequestParam(value = "orgCode", required = true) final String orgCode) {
         logger.debug(String.format("Checking availability of %s for org %s.", healthId, orgCode));
         logAccessDetails(getUserInfo(), "Checking availability of Health Id");
-        final DeferredResult<String> deferredResult = new DeferredResult<>();
+        final DeferredResult<Map> deferredResult = new DeferredResult<>();
         rx.Observable<OrgHealthId> observable = healthIdService.findOrgHealthId(healthId);
         observable.subscribe(new Action1<OrgHealthId>() {
             @Override
@@ -145,7 +145,7 @@ public class HealthIdController extends BaseController {
                 Map<String, Object> map = new HashMap<>();
                 map.put("availability", false);
                 if (orgHealthId == null) {
-                    map.put("reason", "Health Id is allocated to another organization.");
+                    map.put("reason", "Health Id is not allocated to any organization.");
                 } else if (orgHealthId.isUsed()) {
                     map.put("reason", "Health Id is already allocated to another patient.");
                 } else if (!orgCode.equals(orgHealthId.getAllocatedFor())) {
@@ -153,12 +153,7 @@ public class HealthIdController extends BaseController {
                 } else {
                     map.put("availability", true);
                 }
-                try {
-                    objectMapper = new ObjectMapper();
-                    deferredResult.setResult(objectMapper.writeValueAsString(map));
-                } catch (JsonProcessingException e) {
-                    deferredResult.setErrorResult(e);
-                }
+                deferredResult.setResult(map);
             }
         }, errorCallback(deferredResult));
         return deferredResult;

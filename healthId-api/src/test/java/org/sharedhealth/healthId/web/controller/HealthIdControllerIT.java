@@ -430,27 +430,19 @@ public class HealthIdControllerIT extends BaseControllerTest {
                         .withBody(asString("jsons/userDetails/userDetailForSHRSystemAdmin.json"))));
 
         MvcResult mvcResult = mockCheckAvailability(orgCode, validHealthId);
-        assertTrue((Boolean) convertAsyncResultToMap(mvcResult).get("availability"));
+        assertTrue((Boolean) ((Map) mvcResult.getAsyncResult()).get("availability"));
 
         String invalidHealthId = "aljkfdlk32";
         mvcResult = mockCheckAvailability(orgCode, invalidHealthId);
-        assertFalse((Boolean) convertAsyncResultToMap(mvcResult).get("availability"));
+        assertFalse((Boolean) ((Map) mvcResult.getAsyncResult()).get("availability"));
 
         String invalidOrgCode = "mci3";
         mvcResult = mockCheckAvailability(invalidOrgCode, validHealthId);
-        assertFalse((Boolean) convertAsyncResultToMap(mvcResult).get("availability"));
+        assertFalse((Boolean) ((Map) mvcResult.getAsyncResult()).get("availability"));
 
         String usedHealthId = createOrgHealthIds(1, orgCode, true).get(0);
         mvcResult = mockCheckAvailability(orgCode, usedHealthId);
-        assertFalse((Boolean) convertAsyncResultToMap(mvcResult).get("availability"));
-    }
-
-    private Map convertAsyncResultToMap(MvcResult mvcResult) throws java.io.IOException {
-        String asyncResult;
-        Map map;
-        asyncResult = (String) mvcResult.getAsyncResult();
-        map = new ObjectMapper().readValue(asyncResult, Map.class);
-        return map;
+        assertFalse((Boolean) ((Map) mvcResult.getAsyncResult()).get("availability"));
     }
 
     private MvcResult mockCheckAvailability(String orgCode, String healthId) throws Exception {
