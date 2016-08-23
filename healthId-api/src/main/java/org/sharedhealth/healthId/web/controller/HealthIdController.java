@@ -21,7 +21,9 @@ import rx.functions.Action1;
 
 import java.util.*;
 
-import static org.springframework.web.bind.annotation.RequestMethod.*;
+import static org.springframework.web.bind.annotation.RequestMethod.GET;
+import static org.springframework.web.bind.annotation.RequestMethod.POST;
+import static org.springframework.web.bind.annotation.RequestMethod.PUT;
 
 @RestController
 @RequestMapping("/healthIds")
@@ -123,7 +125,22 @@ public class HealthIdController extends BaseController {
         return deferredResult;
     }
 
-    private Action1<Throwable> errorCallback(final DeferredResult<String> deferredResult) {
+    @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
+    @RequestMapping(method = GET, value = "/isUsable/{healthId}")
+    public DeferredResult<Boolean> isUsable(@PathVariable(value = "healthId") String healthId,
+                                            @RequestParam(value = "orgCode", required = true) String orgCode) {
+        final DeferredResult<Boolean> deferredResult = new DeferredResult<>();
+        rx.Observable<Boolean> observable = healthIdService.isAllocatedAndUnused(healthId, orgCode);
+        observable.subscribe(new Action1<Boolean>() {
+            @Override
+            public void call(Boolean aBoolean) {
+                deferredResult.setResult(aBoolean);
+            }
+        }, errorCallback(deferredResult));
+        return deferredResult;
+    }
+
+    private <T> Action1<Throwable> errorCallback(final DeferredResult<T> deferredResult) {
         return new Action1<Throwable>() {
             @Override
             public void call(Throwable error) {

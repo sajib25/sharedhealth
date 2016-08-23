@@ -21,16 +21,24 @@ import java.util.List;
 import java.util.Map;
 
 import static com.datastax.driver.core.utils.UUIDs.timeBased;
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.equalTo;
+import static com.github.tomakehurst.wiremock.client.WireMock.givenThat;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.MockitoAnnotations.initMocks;
-import static org.sharedhealth.healthId.web.controller.HealthIdController.*;
+import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_ALL_URI;
+import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_BLOCK_FOR_ORG_URI;
+import static org.sharedhealth.healthId.web.controller.HealthIdController.GENERATE_BLOCK_URI;
 import static org.sharedhealth.healthId.web.utils.FileUtil.asString;
-import static org.sharedhealth.healthId.web.utils.HttpUtil.*;
+import static org.sharedhealth.healthId.web.utils.HttpUtil.AUTH_TOKEN_KEY;
+import static org.sharedhealth.healthId.web.utils.HttpUtil.CLIENT_ID_KEY;
+import static org.sharedhealth.healthId.web.utils.HttpUtil.FROM_KEY;
 import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -330,7 +338,6 @@ public class HealthIdControllerIT extends BaseControllerTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(asString("jsons/userDetails/userDetailForSHRSystemAdmin.json"))));
         HashMap<String, String> map = new HashMap<>();
-        map.put("org_code", orgCode);
         map.put("used_at", timeBased().toString());
         String content = new ObjectMapper().writeValueAsString(map);
 
@@ -341,6 +348,7 @@ public class HealthIdControllerIT extends BaseControllerTest {
                 .content(content)
                 .contentType(APPLICATION_JSON))
                 .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
                 .andReturn();
     }
 
@@ -349,8 +357,6 @@ public class HealthIdControllerIT extends BaseControllerTest {
         validAccessToken = "40214a6c-e27c-4223-981c-1f837be90f02";
         validClientId = "18548";
         validEmail = "facility@gmail.com";
-
-        String orgCode = "mci1";
 
         mockMvc = MockMvcBuilders
                 .webAppContextSetup(webApplicationContext)
@@ -364,8 +370,6 @@ public class HealthIdControllerIT extends BaseControllerTest {
                         .withHeader("Content-Type", "application/json")
                         .withBody(asString("jsons/userDetails/userDetailForFacility.json"))));
 
-        HashMap<String, String> map = new HashMap<>();
-
         mockMvc.perform(put(API_END_POINT + "/markUsed/1234")
                 .header(AUTH_TOKEN_KEY, validAccessToken)
                 .header(FROM_KEY, validEmail)
@@ -373,6 +377,64 @@ public class HealthIdControllerIT extends BaseControllerTest {
                 .content("{}")
                 .contentType(APPLICATION_JSON))
                 .andExpect(status().isForbidden())
+                .andReturn();
+    }
+
+    @Test
+    public void testHealthIdIsNotUsableByFacility() throws Exception {
+        String orgCode = "mci1";
+
+        validAccessToken = "40214a6c-e27c-4223-981c-1f837be90f02";
+        validClientId = "18548";
+        validEmail = "facility@gmail.com";
+
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .addFilters(springSecurityFilterChain)
+                .build();
+
+        givenThat(WireMock.get(urlEqualTo("/token/" + validAccessToken))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(asString("jsons/userDetails/userDetailForFacility.json"))));
+
+        mockMvc.perform(get(API_END_POINT + "/isUsable/1234")
+                .param("orgCode", orgCode)
+                .header(AUTH_TOKEN_KEY, validAccessToken)
+                .header(FROM_KEY, validEmail)
+                .header(CLIENT_ID_KEY, validClientId))
+                .andExpect(status().isForbidden())
+                .andReturn();
+    }
+
+    @Test
+    public void testHealthIdIsUsableByShrSystemAdmin() throws Exception {
+        validAccessToken = "85HoExoxghh1pislg65hUM0q3wM9kfzcMdpYS0ixPD";
+        validClientId = "18570";
+        validEmail = "shrsystemadmin@test.com";
+
+        String orgCode = "mci1";
+        String healthId = createOrgHealthIds(1, orgCode).get(0);
+
+        mockMvc = MockMvcBuilders
+                .webAppContextSetup(webApplicationContext)
+                .addFilters(springSecurityFilterChain)
+                .build();
+
+        givenThat(WireMock.get(urlEqualTo("/token/" + validAccessToken))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(asString("jsons/userDetails/userDetailForSHRSystemAdmin.json"))));
+
+        mockMvc.perform(get(API_END_POINT + "/isUsable/" + healthId)
+                .param("orgCode", orgCode)
+                .header(AUTH_TOKEN_KEY, validAccessToken)
+                .header(FROM_KEY, validEmail)
+                .header(CLIENT_ID_KEY, validClientId))
+                .andExpect(status().isOk())
+                .andExpect(request().asyncStarted())
                 .andReturn();
     }
 }

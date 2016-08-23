@@ -23,6 +23,7 @@ import java.util.UUID;
 
 import static com.datastax.driver.core.utils.UUIDs.timeBased;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -65,6 +66,22 @@ public class HealthIdServiceIT {
         OrgHealthId savedOrgHealthId = healthIdRepository.findOrgHealthId(healthId).toBlocking().first();
         assertTrue(savedOrgHealthId.isUsed());
         assertEquals(usedAt, savedOrgHealthId.getUsedAt());
+    }
+
+    @Test
+    public void shouldCheckIfOrgHealthIdIsAllocatedToValidOrgAndUnused() throws Exception {
+        String validOrgCode = "org1";
+        String unUsedHealthId = "12";
+        createOrgHealthIds(unUsedHealthId, validOrgCode);
+        String usedHealthId = "123";
+        createOrgHealthIds(usedHealthId, validOrgCode);
+        healthIdService.markOrgHealthIdUsed(usedHealthId, timeBased()).toBlocking().first();
+
+        assertTrue(healthIdService.isAllocatedAndUnused(unUsedHealthId, validOrgCode).toBlocking().first());
+
+        assertFalse(healthIdService.isAllocatedAndUnused(unUsedHealthId, "org2").toBlocking().first());
+
+        assertFalse(healthIdService.isAllocatedAndUnused(usedHealthId, validOrgCode).toBlocking().first());
     }
 
     private void createHealthIds(long prefix, int numberOfHids) {
