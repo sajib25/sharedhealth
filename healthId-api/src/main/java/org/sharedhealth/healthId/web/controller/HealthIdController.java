@@ -106,7 +106,7 @@ public class HealthIdController extends BaseController {
             }
         });
         responseMap.put("hids", hids);
-        logger.info(String.format("Assigned %s MCI healthIds for %s.", totalHids, mciCode));
+        logger.info("Assigned {} MCI healthIds for {}.", totalHids, mciCode);
         return responseMap;
     }
 
@@ -114,7 +114,7 @@ public class HealthIdController extends BaseController {
     @RequestMapping(method = PUT, value = "/markUsed/{healthId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public DeferredResult<String> markUsed(@PathVariable(value = "healthId") String healthId,
                                            @RequestBody Map responseBody) throws JsonProcessingException {
-        logger.debug(String.format("Marking %s as used.", healthId));
+        logger.debug("Marking %s as used.", healthId);
         logAccessDetails(getUserInfo(), "Marking Health Id as used");
         final DeferredResult<String> deferredResult = new DeferredResult<>();
         String usedAt = (String) responseBody.get("used_at");
@@ -135,7 +135,7 @@ public class HealthIdController extends BaseController {
     @RequestMapping(method = GET, value = "/checkAvailability/{healthId}")
     public DeferredResult<Map> checkAvailability(@PathVariable(value = "healthId") String healthId,
                                                  @RequestParam(value = "orgCode", required = true) final String orgCode) {
-        logger.debug(String.format("Checking availability of %s for org %s.", healthId, orgCode));
+        logger.debug("Checking availability of {} for org {}.", healthId, orgCode);
         logAccessDetails(getUserInfo(), "Checking availability of Health Id");
         final DeferredResult<Map> deferredResult = new DeferredResult<>();
         rx.Observable<OrgHealthId> observable = healthIdService.findOrgHealthId(healthId);
