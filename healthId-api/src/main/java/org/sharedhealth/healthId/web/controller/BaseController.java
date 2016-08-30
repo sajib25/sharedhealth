@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonRootName;
 import org.sharedhealth.healthId.web.exception.Forbidden;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.healthId.web.exception.HealthIdNotFoundException;
+import org.sharedhealth.healthId.web.exception.InvalidRequestException;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,6 +63,14 @@ public class BaseController {
     public ErrorInfo healthIdNotFound(HealthIdNotFoundException exception) {
         logger.error(exception.getMessage());
         return new ErrorInfo(HttpStatus.NOT_FOUND.value(), exception.getMessage());
+    }
+
+    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
+    @ResponseBody
+    @ExceptionHandler(InvalidRequestException.class)
+    public ErrorInfo invalidRequest(InvalidRequestException exception) {
+        logger.error(exception.getMessage());
+        return new ErrorInfo(HttpStatus.BAD_REQUEST.value(), exception.getMessage());
     }
 
     @ResponseStatus(value = INTERNAL_SERVER_ERROR)
