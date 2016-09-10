@@ -1,5 +1,10 @@
-CREATE TABLE IF NOT EXISTS generated_hid_range (
+CREATE TABLE IF NOT EXISTS generated_hid_blocks (
+    series_no bigint,
+    generated_for varchar,
+    generated_at timeuuid,
     begins_at bigint,
     ends_at bigint,
-    PRIMARY KEY (begins_at)
+    total_hids bigint,
+    requested_by varchar,
+    PRIMARY KEY ((series_no), generated_for, generated_at)
 );
