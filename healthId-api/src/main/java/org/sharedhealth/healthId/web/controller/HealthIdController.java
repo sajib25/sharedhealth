@@ -40,7 +40,6 @@ public class HealthIdController extends BaseController {
     private HealthIdService healthIdService;
     private FacilityService facilityService;
     private HealthIdProperties healthIdProperties;
-    private ObjectMapper objectMapper;
 
     @Autowired
     public HealthIdController(HealthIdService healthIdService, FacilityService facilityService, HealthIdProperties healthIdProperties) {
@@ -114,7 +113,7 @@ public class HealthIdController extends BaseController {
     @RequestMapping(method = PUT, value = "/markUsed/{healthId}", consumes = {MediaType.APPLICATION_JSON_VALUE})
     public DeferredResult<String> markUsed(@PathVariable(value = "healthId") String healthId,
                                            @RequestBody Map responseBody) throws JsonProcessingException {
-        logger.debug("Marking %s as used.", healthId);
+        logger.debug("Marking {} as used.", healthId);
         logAccessDetails(getUserInfo(), "Marking Health Id as used");
         final DeferredResult<String> deferredResult = new DeferredResult<>();
         String usedAt = (String) responseBody.get("used_at");

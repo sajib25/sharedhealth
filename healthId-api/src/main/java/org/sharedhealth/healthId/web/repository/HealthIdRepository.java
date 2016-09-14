@@ -37,7 +37,7 @@ public class HealthIdRepository extends BaseRepository {
     }
 
     public Observable<Boolean> saveOrUpdateOrgHealthId(OrgHealthId orgHealthId) {
-        logger.debug(String.format("Assigining %s Health Id for Organization %s", orgHealthId.getHealthId(), orgHealthId.getAllocatedFor()));
+        logger.debug(String.format("Marking %s used for Organization %s", orgHealthId.getHealthId(), orgHealthId.getAllocatedFor()));
         Insert insertQuery = getInsertQuery(orgHealthId);
         return Observable.from(cassandraOps.executeAsynchronously(insertQuery)).flatMap(
                 RxMaps.respondOnNext(true),
