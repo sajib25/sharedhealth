@@ -9,7 +9,6 @@ import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.sharedhealth.healthId.web.Model.FacilityResponse;
 import org.sharedhealth.healthId.web.Model.GeneratedHIDBlock;
-import org.sharedhealth.healthId.web.Model.MciHealthId;
 import org.sharedhealth.healthId.web.config.HealthIdProperties;
 import org.sharedhealth.healthId.web.exception.InvalidRequestException;
 import org.sharedhealth.healthId.web.security.UserInfo;

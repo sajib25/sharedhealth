@@ -41,6 +41,7 @@ ext.libraries = [
         spring_boot_security : "org.springframework.boot:spring-boot-starter-security:1.1.8.RELEASE",
         apache_lang          : "org.apache.commons:commons-lang3:3.3.2",
         rxjava               : "io.reactivex:rxjava:1.0.15",
+        ehcache_core         : "net.sf.ehcache:ehcache-core:2.6.10",
 ]
 
 ext.testLibraries = [

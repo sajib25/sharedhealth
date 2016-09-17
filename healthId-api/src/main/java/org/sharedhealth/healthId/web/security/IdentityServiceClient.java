@@ -18,6 +18,8 @@ import org.springframework.web.client.AsyncRestTemplate;
 import javax.naming.AuthenticationException;
 import java.util.concurrent.ExecutionException;
 
+import static org.sharedhealth.healthId.web.config.HealthIdCacheConfiguration.IDENTITY_CACHE;
+
 @Component
 public class IdentityServiceClient {
     public static final String CLIENT_ID_KEY = "client_id";
@@ -39,9 +41,10 @@ public class IdentityServiceClient {
         this.clientAuthentication = clientAuthentication;
     }
 
-    @Cacheable(value = "identityCache", unless = "#result == null")
+    @Cacheable(value = IDENTITY_CACHE, unless = "#result == null")
     public TokenAuthentication authenticate(UserAuthInfo userAuthInfo, String token) throws AuthenticationException, ExecutionException,
             InterruptedException {
+        logger.debug("Verifying token for {}", userAuthInfo.getEmail());
         String userInfoUrl = ensureEndsWithBackSlash(healthIdProperties.getIdentityServerBaseUrl()) + token;
         HttpHeaders httpHeaders = getHrmIdentityHeaders(healthIdProperties);
         ListenableFuture<ResponseEntity<UserInfo>> listenableFuture = restTemplate.exchange(userInfoUrl,

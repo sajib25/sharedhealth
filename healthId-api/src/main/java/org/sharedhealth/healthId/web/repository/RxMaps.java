@@ -1,7 +1,6 @@
 package org.sharedhealth.healthId.web.repository;
 
 import com.datastax.driver.core.ResultSet;
-import org.slf4j.Logger;
 import rx.Observable;
 import rx.functions.Func0;
 import rx.functions.Func1;

@@ -9,6 +9,7 @@ import org.springframework.web.client.AsyncRestTemplate;
 
 @Configuration
 @Import({HealthIdCassandraConfig.class,
+        HealthIdCacheConfiguration.class
 })
 public class HealthIdConfig {
     public static final String DIAGNOSTICS_SERVLET_PATH = "/diagnostics/health";

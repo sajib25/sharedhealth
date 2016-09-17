@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.stereotype.Component;
 
-import static java.lang.Boolean.valueOf;
-
 @Component
 public class HealthIdProperties {
 

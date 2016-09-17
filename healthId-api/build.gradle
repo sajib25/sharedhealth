@@ -34,9 +34,9 @@ dependencies {
     }
 
     compile libraries.spring_boot_logging, libraries.snappy, libraries.spring_context_support,
-            libraries.spring_data_cassandra, libraries.hibernate_validator,
-            libraries.apache_collections, libraries.apache_bean_utils, libraries.commons_codec, libraries.apache_lang,
-            libraries.commons_validator, libraries.spring_security,  libraries.joda_time, libraries.rxjava
+            libraries.spring_data_cassandra, libraries.hibernate_validator, libraries.apache_collections,
+            libraries.apache_bean_utils, libraries.commons_codec, libraries.apache_lang, libraries.commons_validator,
+            libraries.spring_security,  libraries.joda_time, libraries.rxjava, libraries.ehcache_core
 
     testCompile project(":schema")
     testCompile(testLibraries.netty) {
