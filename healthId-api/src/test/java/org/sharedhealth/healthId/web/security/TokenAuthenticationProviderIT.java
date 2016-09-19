@@ -2,6 +2,8 @@ package org.sharedhealth.healthId.web.security;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import net.sf.ehcache.CacheManager;
+import org.junit.After;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -28,6 +30,10 @@ public class TokenAuthenticationProviderIT {
     @Rule
     public WireMockRule wireMockRule = new WireMockRule(9997);
 
+    @After
+    public void tearDown() throws Exception {
+        CacheManager.getInstance().clearAll();
+    }
 
     @Test
     public void shouldCacheTheResultFromIdentityServer() throws Exception {

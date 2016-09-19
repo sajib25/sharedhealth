@@ -2,6 +2,7 @@ package org.sharedhealth.healthId.web.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import net.sf.ehcache.CacheManager;
 import org.cassandraunit.spring.CassandraUnit;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.Description;
@@ -98,6 +99,7 @@ public class BaseControllerTest {
     @After
     public void teardownBase() {
         TestUtil.truncateAllColumnFamilies(cassandraOps);
+        CacheManager.getInstance().clearAll();
     }
 
     protected BaseMatcher<Object> isForbidden() {
