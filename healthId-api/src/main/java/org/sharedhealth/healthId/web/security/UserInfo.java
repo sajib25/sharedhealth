@@ -1,8 +1,10 @@
 package org.sharedhealth.healthId.web.security;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -16,9 +18,11 @@ public class UserInfo {
     public static final String PROVIDER_GROUP = ROLE_PREFIX + "PROVIDER";
     public static final String PATIENT_GROUP = ROLE_PREFIX + "PATIENT";
     public static final String FACILITY_ADMIN_GROUP = ROLE_PREFIX + "Facility Admin";
-    public static final String SHR_SYSTEM_ADMIN_GROUP = ROLE_PREFIX + "SHR System Admin";
     public static final String MCI_ADMIN = ROLE_PREFIX + "MCI Admin";
     public static final String MCI_APPROVER = ROLE_PREFIX + "MCI Approver";
+
+    public static final String SHR_SYSTEM_ADMIN_GROUP = ROLE_PREFIX + "SHR System Admin";
+    public static final String HRM_SHR_SYSTEM_ADMIN_GROUP = "SHR System Admin";
 
     @JsonProperty("id")
     private String id;
@@ -36,6 +40,8 @@ public class UserInfo {
     private List<String> groups;
     @JsonProperty("profiles")
     private List<UserProfile> userProfiles;
+    @JsonIgnore
+    private List<String> userGroups;
 
     private UserInfoProperties instance;
 
@@ -48,9 +54,11 @@ public class UserInfo {
         this.accessToken = accessToken;
         this.groups = groups;
         this.userProfiles = userProfiles;
+        this.userGroups = new ArrayList<>();
     }
 
     public UserInfo() {
+        this.userGroups = new ArrayList<>();
     }
 
     @Override
@@ -108,6 +116,10 @@ public class UserInfo {
             return name;
         }
 
+        public List<String> getUserGroups() {
+            return userGroups;
+        }
+
         public List<String> getGroups() {
             return groups;
         }
@@ -152,98 +164,12 @@ public class UserInfo {
             return adminId;
         }
 
-        public boolean hasCatchmentForProfileType(String requestedCatchment, List<String> profileTypes) {
-            for (String profileType : profileTypes) {
-                UserProfile userProfile = getUserProfileByType(profileType);
-                if (userProfile != null && userProfile.hasCatchment(requestedCatchment)) {
-                    return true;
-                }
+        private void loadUserProperties() {
+            if (containsCaseInsensitive(groups, HRM_SHR_SYSTEM_ADMIN_GROUP)){
+                userGroups.add(SHR_SYSTEM_ADMIN_GROUP);
             }
-            return false;
-        }
-
-        private UserProfile getUserProfileByType(String profileType) {
-            if (!isEmpty(userProfiles)) {
-                for (UserProfile userProfile : userProfiles) {
-                    if (userProfile.getName().equalsIgnoreCase(profileType)) {
-                        return userProfile;
-                    }
-                }
-            }
-            return null;
-        }
-
-        public void loadUserProperties() {
-            addRolePrefixToGroups();
-            if (containsCaseInsensitive(groups, MCI_USER_GROUP)) {
-                addAddtionalUserGroupsBasedOnProfiles();
-            }
-            if (!isEmpty(userProfiles) && (containsCaseInsensitive(groups, MCI_ADMIN)
-                    || containsCaseInsensitive(groups, MCI_APPROVER))) {
-                    for (UserProfile userProfile : userProfiles) {
-                        loadAdminProperties(userProfile);
-                    }
-            }
-            if (containsCaseInsensitive(groups, SHR_SYSTEM_ADMIN_GROUP)) {
+            if (containsCaseInsensitive(groups, HRM_SHR_SYSTEM_ADMIN_GROUP)) {
                 isShrSystemAdmin = true;
-            }
-        }
-
-        private void addAddtionalUserGroupsBasedOnProfiles() {
-            if (isEmpty(userProfiles)) return;
-            for (UserProfile userProfile : userProfiles) {
-                addGroupsBasedOnProfiles(userProfile);
-                loadFacilityProperties(userProfile);
-                loadProviderProperties(userProfile);
-                loadPatientProperties(userProfile);
-            }
-        }
-
-        private void loadAdminProperties(UserProfile userProfile) {
-            if (userProfile.isAdmin()) {
-                adminId = userProfile.getId();
-            }
-        }
-
-        private void addRolePrefixToGroups() {
-            for (int index = 0; index < groups.size(); index++) {
-                String group = groups.get(index);
-                groups.set(index, group.startsWith(ROLE_PREFIX) ? group : format("%s%s", ROLE_PREFIX, group));
-            }
-        }
-
-        public boolean isPatientUserOnly() {
-            return patientHid != null && providerId == null && facilityId == null
-                    && !containsCaseInsensitive(groups, MCI_ADMIN)
-                    && !containsCaseInsensitive(groups, MCI_APPROVER);
-        }
-
-        private void addGroupsBasedOnProfiles(UserProfile userProfile) {
-            if (userProfile.isFacility() && containsCaseInsensitive(groups, FACILITY_ADMIN_GROUP)
-                    && !containsCaseInsensitive(groups, SHR_SYSTEM_ADMIN_GROUP)) {
-                groups.add(FACILITY_GROUP);
-            }else if (userProfile.isProvider()) {
-                groups.add(PROVIDER_GROUP);
-            } else if (userProfile.isPatient()) {
-                groups.add(PATIENT_GROUP);
-            }
-        }
-
-        private void loadPatientProperties(UserProfile userProfile) {
-            if (userProfile.isPatient()) {
-                patientHid = userProfile.getId();
-            }
-        }
-
-        private void loadProviderProperties(UserProfile userProfile) {
-            if (userProfile.isProvider()) {
-                providerId = userProfile.getId();
-            }
-        }
-
-        private void loadFacilityProperties(UserProfile userProfile) {
-            if (userProfile.isFacility()) {
-                facilityId = userProfile.getId();
             }
         }
 
