@@ -36,7 +36,6 @@ import static org.sharedhealth.healthId.web.utils.JsonMapper.writeValueAsString;
 public class HealthIdService {
     private static Logger logger = LoggerFactory.getLogger(HealthIdService.class);
 
-    static final String MCI_ORG_CODE = "MCI";
     private static final int DIGITS_FOR_BLOCK_SEPARATION = 2;
     private static final String DEFAULT_HID_STORAGE_PATH = "/opt/mci/hid";
 
@@ -65,7 +64,7 @@ public class HealthIdService {
         for (long i = start; i <= end; i++) {
             numberOfValidHIDs = saveIfValidMciHID(numberOfValidHIDs, i);
         }
-        return saveGeneratedBlock(start, end, numberOfValidHIDs, MCI_ORG_CODE, userInfo, timeBased());
+        return saveGeneratedBlock(start, end, numberOfValidHIDs, healthIdProperties.getMciOrgCode(), userInfo, timeBased());
     }
 
     public GeneratedHIDBlock generateBlock(long start, long totalHIDs, UserInfo userInfo) {
@@ -81,7 +80,7 @@ public class HealthIdService {
             numberOfValidHIDs = saveIfValidMciHID(numberOfValidHIDs, possibleHID);
         }
         long end = startForBlock + i - 1;
-        return saveGeneratedBlock(startForBlock, end, numberOfValidHIDs, MCI_ORG_CODE, userInfo, timeBased());
+        return saveGeneratedBlock(startForBlock, end, numberOfValidHIDs, healthIdProperties.getMciOrgCode(), userInfo, timeBased());
     }
 
     public GeneratedHIDBlock generateBlockForOrg(long start, long totalHIDs, String orgCode, UserInfo userInfo) {
