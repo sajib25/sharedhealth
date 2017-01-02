@@ -89,7 +89,7 @@ task assembly(dependsOn: 'build') << {
 }
 
 task exportProperties(dependsOn: 'assembly') << {
-    PrintStream output = new PrintStream(new FileOutputStream(file("${buildDir}/etc/healthId")));
+    PrintStream output = new PrintStream(new FileOutputStream(file("${buildDir}/etc/healthid")));
     Properties properties = loadConfig()
     properties.each { prop, val ->
         output.println("export " + prop + "=" + val)
@@ -103,7 +103,7 @@ task dist(dependsOn: [project(":schema").tasks.build, 'exportProperties'], type:
     arch = NOARCH
     os = LINUX
 
-    into '/opt/healthId'
+    into '/opt/healthid'
 
     postInstall = file('scripts/utils/postInstall.sh')
     preUninstall = file('scripts/utils/preUninstall.sh')
@@ -131,7 +131,7 @@ task dist(dependsOn: [project(":schema").tasks.build, 'exportProperties'], type:
     from("scripts/rpm") {
         fileMode  0755
         createDirectoryEntry  true
-        exclude 'healthId'
+        exclude 'healthid'
         exclude 'start.sh'
         into 'var'
     }

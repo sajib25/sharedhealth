@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# healthId        start/stop/status script
+# healthid        start/stop/status script
 #
 # chkconfig: - 64 36
 # description: The healthId shared health record system
@@ -15,20 +15,20 @@
 # Description: BDSHR system
 ### END INIT INFO
 
-export healthId_USER=sharedhealth
-export healthId_RUN=/opt/healthId/bin/start.sh
+export HEALTHID_USER=sharedhealth
+export HEALTHID_RUN=/opt/healthid/bin/start.sh
 export CUR_USER=`/usr/bin/whoami`
 
 # load configuration
-. /etc/default/healthId
+. /etc/default/healthid
 
 create_dirs() {
-    if [[ ! -e /var/run/healthId ]]; then
-        ln -s /opt/healthId/var /var/run/healthId
+    if [[ ! -e /var/run/healthid ]]; then
+        ln -s /opt/healthid/var /var/run/healthid
     fi
 
-    if [[ ! -e /var/log/healthId ]]; then
-        mkdir /var/log/healthId
+    if [[ ! -e /var/log/healthid ]]; then
+        mkdir /var/log/healthid
     fi
 }
 healthId_pid() {
@@ -39,29 +39,29 @@ start(){
     pid=$(healthId_pid)
     if [ -n "$pid" ];
     then
-        echo -e "\e[00;31mService healthId is already running (pid: $pid)\e[00m"
+        echo -e "\e[00;31mService healthid is already running (pid: $pid)\e[00m"
     else
         # Start healthId
         create_dirs
-        echo -e "\e[00;32mStarting healthId\e[00m"
-        if [ `user_exists $healthId_USER` = "1" ] && [ "$CUR_USER" != "$healthId_USER" ] ;
+        echo -e "\e[00;32mStarting healthid\e[00m"
+        if [ `user_exists $HEALTHID_USER` = "1" ] && [ "$CUR_USER" != "$HEALTHID_USER" ] ;
         then
-                /bin/su $healthId_USER -c $healthId_RUN
+                /bin/su $HEALTHID_USER -c $HEALTHID_RUN
         else
-                sh $healthId_RUN
+                sh $HEALTHID_RUN
         fi
   fi
   return 0
 }
 status(){
           pid=$(healthId_pid)
-          if [ -n "$pid" ]; then echo -e "\e[00;32mService healthId is running with pid: $pid\e[00m"
-          else echo -e "\e[00;31mService healthId is not running\e[00m"
+          if [ -n "$pid" ]; then echo -e "\e[00;32mService healthid is running with pid: $pid\e[00m"
+          else echo -e "\e[00;31mService healthid is not running\e[00m"
           fi
 }
 
 stop() {
-	echo -e "\e[00;31mTerminating healthId\e[00m"
+	echo -e "\e[00;31mTerminating healthid\e[00m"
 	kill -9 $(healthId_pid)
 }
 user_exists(){
