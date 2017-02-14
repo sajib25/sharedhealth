@@ -79,7 +79,7 @@ public class BaseControllerTest {
 
     protected void createMCIHealthIds() {
         for (int i = 0; i < 10; i++) {
-            healthIdRepository.saveMciHealthId(new MciHealthId(String.valueOf(new Date().getTime() + i)));
+            healthIdRepository.saveMciHealthId(new MciHealthId(String.valueOf(new Date().getTime() + i))).toBlocking().first();
         }
     }
 
