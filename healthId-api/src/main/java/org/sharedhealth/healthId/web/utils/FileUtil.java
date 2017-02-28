@@ -22,14 +22,9 @@ public class FileUtil {
         }
     }
 
-    public static void addHidToFile(File file, String hid) {
-        try {
-            String hidToWrite = hid + System.getProperty("line.separator");
-            Files.append(hidToWrite, file, Charsets.UTF_8);
-        } catch (IOException e) {
-            logger.error(String.format("Can not write to file HID %s to file %s", hid, file));
-            e.printStackTrace();
-        }
+    public static void addHidToFile(File file, String hid) throws IOException {
+        String hidToWrite = hid + System.getProperty("line.separator");
+        Files.append(hidToWrite, file, Charsets.UTF_8);
     }
 
     public static File createHIDFile(String hidStorageDirPath, String fileName) {

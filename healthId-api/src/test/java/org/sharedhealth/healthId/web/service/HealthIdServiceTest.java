@@ -108,6 +108,13 @@ public class HealthIdServiceTest {
         assertTrue(invalidPattern.matcher("9926").find());
     }
 
+
+    @Test
+    public void validOtherIdsCannotHaveMoreThan10Chars() {
+        Pattern invalidPattern = Pattern.compile(healthIdProperties.getOtherOrgInvalidHidPattern());
+        assertFalse(invalidPattern.matcher("9201588861").find());
+    }
+
     @Test
     public void shouldExecuteConfiguredInvalidRegex() {
         HealthIdProperties testProperties = new HealthIdProperties();

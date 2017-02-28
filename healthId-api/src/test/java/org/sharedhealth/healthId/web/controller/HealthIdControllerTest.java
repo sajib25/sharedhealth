@@ -15,9 +15,10 @@ import org.sharedhealth.healthId.web.security.UserInfo;
 import org.sharedhealth.healthId.web.security.UserProfile;
 import org.sharedhealth.healthId.web.service.FacilityService;
 import org.sharedhealth.healthId.web.service.HealthIdService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.context.request.async.DeferredResult;
 
 import java.util.ArrayList;
 
@@ -73,7 +74,9 @@ public class HealthIdControllerTest {
 
         when(healthIdService.generateBlock(eq(start), eq(total), any(UserInfo.class))).thenReturn(hidBlock);
         HealthIdController healthIdController = new HealthIdController(healthIdService, facilityService, testProperties);
-        assertEquals("Generated 100 HIDs.", healthIdController.generateBlock(start, total).getResult());
+        ResponseEntity result = (ResponseEntity) healthIdController.generateBlock(start, total).getResult();
+        assertEquals("Generated 100 HIDs.", result.getBody());
+        assertEquals(HttpStatus.OK, result.getStatusCode());
         verify(healthIdService, times(1)).generateBlock(eq(start), eq(total), any(UserInfo.class));
     }
 
@@ -92,9 +95,9 @@ public class HealthIdControllerTest {
         when(healthIdService.generateBlockForOrg(eq(start), eq(total), eq(facilityID), any(UserInfo.class))).thenReturn(hidBlock);
 
         HealthIdController healthIdController = new HealthIdController(healthIdService, facilityService, testProperties);
-        DeferredResult<String> result = healthIdController.generateBlockForOrg(facilityID, start, total);
+        ResponseEntity result = (ResponseEntity) healthIdController.generateBlockForOrg(facilityID, start, total).getResult();
 
-        assertEquals("Generated 100 HIDs.", result.getResult());
+        assertEquals("Generated 100 HIDs.", result.getBody());
         verify(healthIdService, times(1)).generateBlockForOrg(eq(start), eq(total), eq(facilityID), any(UserInfo.class));
     }
 
@@ -115,9 +118,9 @@ public class HealthIdControllerTest {
         when(healthIdService.generateBlockForOrg(eq(start), eq(total), eq(facilityID), any(UserInfo.class))).thenReturn(hidBlock);
 
         HealthIdController healthIdController = new HealthIdController(healthIdService, facilityService, testProperties);
-        DeferredResult<String> result = healthIdController.generateBlockForOrg(facilityID, start, total);
+        ResponseEntity result = (ResponseEntity) healthIdController.generateBlockForOrg(facilityID, start, total).getResult();
 
-        assertEquals("Can generate only 100 HIDs, because series exhausted. Use another series.", result.getResult());
+        assertEquals("Can generate only 100 HIDs, because series exhausted. Use another series.", result.getBody());
         verify(healthIdService, times(1)).generateBlockForOrg(eq(start), eq(total), eq(facilityID), any(UserInfo.class));
     }
 

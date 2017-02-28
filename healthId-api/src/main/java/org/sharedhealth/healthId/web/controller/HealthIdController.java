@@ -7,6 +7,7 @@ import org.sharedhealth.healthId.web.Model.GeneratedHIDBlock;
 import org.sharedhealth.healthId.web.Model.MciHealthId;
 import org.sharedhealth.healthId.web.Model.OrgHealthId;
 import org.sharedhealth.healthId.web.config.HealthIdProperties;
+import org.sharedhealth.healthId.web.exception.HidGenerationException;
 import org.sharedhealth.healthId.web.exception.InvalidRequestException;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.sharedhealth.healthId.web.service.FacilityService;
@@ -14,7 +15,9 @@ import org.sharedhealth.healthId.web.service.HealthIdService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
@@ -60,8 +63,8 @@ public class HealthIdController extends BaseController {
 
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
     @RequestMapping(method = POST, value = GENERATE_BLOCK_URI)
-    public DeferredResult<String> generateBlock(@RequestParam(value = "start") long start,
-                                                @RequestParam(value = "totalHIDs") long totalHIDs) {
+    public DeferredResult<ResponseEntity> generateBlock(@RequestParam(value = "start") long start,
+                                                        @RequestParam(value = "totalHIDs") long totalHIDs) {
         if (isStartInvalidForMCI(start)) {
             throw new InvalidRequestException(String.format("%s not for MCI", start));
         }
@@ -73,14 +76,21 @@ public class HealthIdController extends BaseController {
 
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
     @RequestMapping(method = POST, value = GENERATE_BLOCK_FOR_ORG_URI)
-    public DeferredResult<String> generateBlockForOrg(@RequestParam(value = "org") String orgCode,
-                                                      @RequestParam(value = "start") long start,
-                                                      @RequestParam(value = "totalHIDs") long totalHIDs) {
+    public DeferredResult<ResponseEntity> generateBlockForOrg(@RequestParam(value = "org") String orgCode,
+                                                              @RequestParam(value = "start") long start,
+                                                              @RequestParam(value = "totalHIDs") long totalHIDs) {
         validateRequest(orgCode, start, totalHIDs);
         UserInfo userInfo = getUserInfo();
         logAccessDetails(userInfo, "Generating new hids");
-        GeneratedHIDBlock generatedHIDBlock = healthIdService.generateBlockForOrg(start, totalHIDs, orgCode, userInfo);
-        return getResult(generatedHIDBlock, totalHIDs);
+        try {
+            GeneratedHIDBlock generatedHIDBlock = healthIdService.generateBlockForOrg(start, totalHIDs, orgCode, userInfo);
+            return getResult(generatedHIDBlock, totalHIDs);
+        } catch (HidGenerationException e) {
+            final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
+            ResponseEntity<String> responseEntity = new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            deferredResult.setResult(responseEntity);
+            return deferredResult;
+        }
     }
 
     @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
@@ -165,15 +175,16 @@ public class HealthIdController extends BaseController {
         };
     }
 
-    private DeferredResult<String> getResult(GeneratedHIDBlock generatedHIDBlock, long totalHIDs) {
-        final DeferredResult<String> deferredResult = new DeferredResult<>();
+    private DeferredResult<ResponseEntity> getResult(GeneratedHIDBlock generatedHIDBlock, long totalHIDs) {
+        final DeferredResult<ResponseEntity> deferredResult = new DeferredResult<>();
         String message;
         if (generatedHIDBlock.getTotalHIDs() < totalHIDs) {
             message = String.format("Can generate only %s HIDs, because series exhausted. Use another series.", generatedHIDBlock.getTotalHIDs());
+
         } else {
             message = String.format("Generated %s HIDs.", generatedHIDBlock.getTotalHIDs());
         }
-        deferredResult.setResult(message);
+        deferredResult.setResult(new ResponseEntity<>(message, HttpStatus.OK));
         logger.info(message);
         return deferredResult;
     }

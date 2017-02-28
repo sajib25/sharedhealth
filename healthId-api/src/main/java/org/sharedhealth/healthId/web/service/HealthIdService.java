@@ -9,6 +9,7 @@ import org.sharedhealth.healthId.web.Model.RequesterDetails;
 import org.sharedhealth.healthId.web.config.HealthIdProperties;
 import org.sharedhealth.healthId.web.exception.HealthIdExhaustedException;
 import org.sharedhealth.healthId.web.exception.HealthIdNotFoundException;
+import org.sharedhealth.healthId.web.exception.HidGenerationException;
 import org.sharedhealth.healthId.web.repository.HealthIdRepository;
 import org.sharedhealth.healthId.web.security.UserInfo;
 import org.sharedhealth.healthId.web.utils.FileUtil;
@@ -21,6 +22,7 @@ import rx.Observable;
 import rx.functions.Func1;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -83,22 +85,32 @@ public class HealthIdService {
         return saveGeneratedBlock(startForBlock, end, numberOfValidHIDs, healthIdProperties.getMciOrgCode(), userInfo, timeBased());
     }
 
-    public GeneratedHIDBlock generateBlockForOrg(long start, long totalHIDs, String orgCode, UserInfo userInfo) {
+    public GeneratedHIDBlock generateBlockForOrg(long start, long totalHIDs, String orgCode, UserInfo userInfo) throws HidGenerationException {
         UUID generatedAt = timeBased();
         long numberOfValidHIDs = 0L;
         long seriesNo = identifySeriesNo(start);
         long startForBlock = identifyStartInSeries(seriesNo);
         File hidFile = createFileForOrg(orgCode);
-        logger.info(String.format("Saving HIDs to file %s ", hidFile.getAbsolutePath()));
-        long i;
-        for (i = 0; numberOfValidHIDs < totalHIDs; i++) {
-            long possibleHID = startForBlock + i;
-            if (!isPartOfSeries(seriesNo, possibleHID)) {
-                break;
+        if (hidStoragePathExists(hidFile)) {
+            logger.info(String.format("Saving HIDs to file %s ", hidFile.getAbsolutePath()));
+            long i;
+            for (i = 0; numberOfValidHIDs < totalHIDs; i++) {
+                long possibleHID = startForBlock + i;
+                if (!isPartOfSeries(seriesNo, possibleHID)) {
+                    break;
+                }
+                numberOfValidHIDs = saveIfValidOrgHID(orgCode, numberOfValidHIDs, hidFile, possibleHID, generatedAt);
             }
-            numberOfValidHIDs = saveIfValidOrgHID(orgCode, numberOfValidHIDs, hidFile, possibleHID, generatedAt);
+            return saveGeneratedBlock(startForBlock, startForBlock + i - 1, numberOfValidHIDs, orgCode, userInfo, generatedAt);
+        } else {
+            logger.info(String.format("HID Storage path %s does not exists ", hidFile.getAbsolutePath()));
+            throw new HidGenerationException(String.format("HID Storage path %s does not exists ", hidFile.getAbsolutePath()));
         }
-        return saveGeneratedBlock(startForBlock, startForBlock + i - 1, numberOfValidHIDs, orgCode, userInfo, generatedAt);
+    }
+
+    private boolean hidStoragePathExists(File hidFile) {
+        File parentFile = hidFile.getParentFile();
+        return parentFile.exists();
     }
 
     public synchronized List<MciHealthId> getNextBlock(final String mciCode, Integer blockSize) {
@@ -142,9 +154,14 @@ public class HealthIdService {
         if (!orgInvalidHidPattern.matcher(possibleHid).find()) {
             String newHealthId = possibleHid + checksumGenerator.generate(possibleHid.substring(1));
             if (shouldSaveHID(newHealthId)) {
-                numberOfValidHIDs += 1;
-                healthIdRepository.saveOrUpdateOrgHealthId(new OrgHealthId(newHealthId, orgCode, generatedAt)).toBlocking().first();
-                FileUtil.addHidToFile(hidFile, newHealthId);
+                try {
+                    numberOfValidHIDs += 1;
+                    FileUtil.addHidToFile(hidFile, newHealthId);
+                    healthIdRepository.saveOrUpdateOrgHealthId(new OrgHealthId(newHealthId, orgCode, generatedAt)).toBlocking().first();
+                } catch (IOException e) {
+                    logger.info(e.getMessage(), e);
+                    throw new HidGenerationException(e.getMessage());
+                }
             }
         }
         return numberOfValidHIDs;
