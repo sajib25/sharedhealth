@@ -134,6 +134,7 @@ public class HealthIdService {
                     return Observable.error(new HealthIdNotFoundException("Health Id not allocated to any Organization."));
                 }
                 orgHealthId.markUsed(usedAt);
+                logger.debug(String.format("Marking %s used for Organization %s", orgHealthId.getHealthId(), orgHealthId.getAllocatedFor()));
                 return healthIdRepository.saveOrUpdateOrgHealthId(orgHealthId);
             }
         });
@@ -157,6 +158,7 @@ public class HealthIdService {
                 try {
                     numberOfValidHIDs += 1;
                     FileUtil.addHidToFile(hidFile, newHealthId);
+                    logger.debug(String.format("Saving healthid %s used for Organization %s", newHealthId, orgCode));
                     healthIdRepository.saveOrUpdateOrgHealthId(new OrgHealthId(newHealthId, orgCode, generatedAt)).toBlocking().first();
                 } catch (IOException e) {
                     logger.info(e.getMessage(), e);
