@@ -94,4 +94,15 @@ public class HealthIdRepository extends BaseRepository {
         }
         cassandraOps.execute(batch);
     }
+
+    public Observable<Integer> findRemainingHIDs(int threshold) {
+        Select select = QueryBuilder.select().countAll().from(CF_MCI_HEALTH_ID).limit(threshold);
+        return Observable.from(cassandraOps.executeAsynchronously(select)).flatMap(new Func1<ResultSet, Observable<Integer>>() {
+            @Override
+            public Observable<Integer> call(ResultSet rows) {
+                Long result = rows.one().getLong(0);
+                return Observable.just(result.intValue());
+            }
+        });
+    }
 }

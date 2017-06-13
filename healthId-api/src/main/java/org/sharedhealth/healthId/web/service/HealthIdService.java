@@ -23,10 +23,7 @@ import rx.functions.Func1;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.datastax.driver.core.utils.UUIDs.timeBased;
@@ -223,6 +220,11 @@ public class HealthIdService {
     }
 
     public Observable<OrgHealthId> findOrgHealthId(String healthId) {
-          return healthIdRepository.findOrgHealthId(healthId);
+        return healthIdRepository.findOrgHealthId(healthId);
+    }
+
+    public Observable<Integer> findRemainingHIDs() {
+        int threshold = healthIdProperties.getHealthIdWarningThreshold();
+        return healthIdRepository.findRemainingHIDs(threshold);
     }
 }

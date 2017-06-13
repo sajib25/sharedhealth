@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.async.DeferredResult;
+import rx.Observable;
 import rx.functions.Action1;
 
 import java.util.*;
@@ -164,6 +165,23 @@ public class HealthIdController extends BaseController {
         }, errorCallback(deferredResult));
         return deferredResult;
     }
+
+    @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
+    @RequestMapping(method = GET, value = "/checkRemaining")
+    public DeferredResult<Integer> checkRemaining() {
+        logger.debug("Checking remaining health ids for MCI.");
+        logAccessDetails(getUserInfo(), "Checking remaining health ids for MCI");
+        final DeferredResult<Integer> deferredResult = new DeferredResult<>();
+        Observable<Integer> observable = healthIdService.findRemainingHIDs();
+        observable.subscribe(new Action1<Integer>() {
+            @Override
+            public void call(Integer integer) {
+                deferredResult.setResult(integer);
+            }
+        }, errorCallback(deferredResult));
+        return deferredResult;
+    }
+
 
     private <T> Action1<Throwable> errorCallback(final DeferredResult<T> deferredResult) {
         return new Action1<Throwable>() {

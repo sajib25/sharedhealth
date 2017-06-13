@@ -60,6 +60,9 @@ public class HealthIdProperties {
     @Value("${MCI_INVALID_HID_PATTERN}")
     private String mciInvalidHidPattern;
 
+    @Value("${HEALTH_ID_WARNING_THRESHOLD}")
+    private String healthIdWarningThreshold;
+
     @Value("${HEALTH_ID_BLOCK_SIZE}")
     private String healthIdBlockSize;
 
@@ -183,4 +186,7 @@ public class HealthIdProperties {
         this.frUrl = frUrl;
     }
 
+    public int getHealthIdWarningThreshold() {
+        return Integer.parseInt((healthIdWarningThreshold));
+    }
 }

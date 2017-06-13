@@ -19,10 +19,12 @@ import org.springframework.test.context.web.WebAppConfiguration;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static com.datastax.driver.core.utils.UUIDs.timeBased;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -65,6 +67,18 @@ public class HealthIdServiceIT {
         OrgHealthId savedOrgHealthId = healthIdRepository.findOrgHealthId(healthId).toBlocking().first();
         assertTrue(savedOrgHealthId.isUsed());
         assertEquals(usedAt, savedOrgHealthId.getUsedAt());
+    }
+
+    @Test
+    public void shouldGiveOutRemainingHIDsAndIfNeedToGenerateNewHIDsOrNot() throws Exception {
+        createHealthIds(9800000000L, 50);
+        int remainingHIDs = healthIdService.findRemainingHIDs().toBlocking().first();
+        assertEquals(10, remainingHIDs);
+
+        healthIdService.getNextBlock("MCI1",45);
+
+        remainingHIDs = healthIdService.findRemainingHIDs().toBlocking().first();
+        assertEquals(5, remainingHIDs);
     }
 
     private void createHealthIds(long prefix, int numberOfHids) {
