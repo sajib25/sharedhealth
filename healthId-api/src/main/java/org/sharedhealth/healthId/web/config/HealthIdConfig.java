@@ -12,7 +12,6 @@ import org.springframework.web.client.AsyncRestTemplate;
         HealthIdCacheConfiguration.class
 })
 public class HealthIdConfig {
-    public static final String DIAGNOSTICS_SERVLET_PATH = "/diagnostics/health";
 
     @Autowired
     private HealthIdProperties healthIdProperties;

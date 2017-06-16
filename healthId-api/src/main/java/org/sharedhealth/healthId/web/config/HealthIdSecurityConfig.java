@@ -49,7 +49,8 @@ public class HealthIdSecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .requestMatcher(new AndRequestMatcher(new ArrayList<RequestMatcher>() {
                     {
-                        add(new NegatedRequestMatcher(new AntPathRequestMatcher(HealthIdProperties.DIAGNOSTICS_SERVLET_PATH)));
+                        add(new NegatedRequestMatcher(new AntPathRequestMatcher(HealthIdProperties.DIAGNOSTICS_HEALTH_SERVLET_PATH)));
+                        add(new NegatedRequestMatcher(new AntPathRequestMatcher(HealthIdProperties.REMAINING_HEALTH_ID_SERVLET_PATH)));
                         add(new AntPathRequestMatcher("/**"));
                     }
                 }))

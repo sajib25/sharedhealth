@@ -166,11 +166,9 @@ public class HealthIdController extends BaseController {
         return deferredResult;
     }
 
-    @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
     @RequestMapping(method = GET, value = "/checkRemaining")
     public DeferredResult<Integer> checkRemaining() {
         logger.debug("Checking remaining health ids for MCI.");
-        logAccessDetails(getUserInfo(), "Checking remaining health ids for MCI");
         final DeferredResult<Integer> deferredResult = new DeferredResult<>();
         Observable<Integer> observable = healthIdService.findRemainingHIDs();
         observable.subscribe(new Action1<Integer>() {

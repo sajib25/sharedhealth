@@ -8,7 +8,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class HealthIdProperties {
 
-    public static final String DIAGNOSTICS_SERVLET_PATH = "/diagnostics/health";
+    public static final String DIAGNOSTICS_HEALTH_SERVLET_PATH = "/diagnostics/health";
+    public static final String REMAINING_HEALTH_ID_SERVLET_PATH = "/healthIds/checkRemaining";
 
     @Bean
     public static PropertySourcesPlaceholderConfigurer propertyPlaceholderConfigurer() {
