@@ -5,6 +5,10 @@ for MCI and other Organizations.
 * Tracking of a particular Health-Id allocated to an organization.
 ## Setting up the environment
 
+####Setup
+The healthid server usage Cassandra database. It usage Identity Server for the authorization purpose.
+Cassandra, Identity-Server and HealthId-Server will be installed in 192.168.33.19 by provisioning this box.
+
 ###Prerequisites
 
 * [VirtualBox](https://www.virtualbox.org/)
@@ -47,13 +51,13 @@ To generate ids you need to follow below steps
 
 Example steps:
 * Login to IdP as an SHR System Admin
-  * `curl http://192.168.33.19:8084/signin -H "X-Auth-Token:local-user-auth-token" -H "client_id:18700" --form "email=local-user@test.com" --form "password=password"`
+  * `curl http://192.168.33.19:8084/signin -H "X-Auth-Token:local-shr-system-admin_auth_token" -H "client_id:18700" --form "email=local-shr-system-admin@test.com" --form "password=password"`
   * This should return you an access_token for SHR System Admin.
 
 * With the above token for SHR System Admin, now you can POST to the http://192.168.33.19:8086/healthIds/generateBlock?start=9800000100&totalHIDs=100 to generate Health IDs with below headers
   * X-Auth-Token:{the token you received in the previous step}
   * client_id:18700 { this is client id for the user who signed in}
-  * From: local-user@test.com
+  * From: local-shr-system-admin@test.com
 
 * The above should return you a message saying "Generated 100 HIDs".
 * You can login to cassandra and check the same
