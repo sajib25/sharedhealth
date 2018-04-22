@@ -1,0 +1,4 @@
+**/**
+!Dockerfile
+!env/docker_healthid
+!healthId-api/build/distributions/healthId-*.noarch.rpm
