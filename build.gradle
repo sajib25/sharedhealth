@@ -6,7 +6,10 @@ subprojects {
     localEnv.load(new FileInputStream(file("${projectDir}/../env/local.properties")))
 
     repositories {
-        mavenCentral()
+        //mavenCentral()
+        maven {
+            url = 'https://repo.maven.apache.org/maven2'
+        }
         maven { url "http://repo.spring.io/snapshot" }
         maven { url "http://repo.spring.io/libs-snapshot" }
         maven { url "http://repo.spring.io/milestone" }
@@ -64,6 +67,9 @@ idea {
 
 buildscript {
     repositories {
-        mavenCentral()
+        //mavenCentral()
+        maven {
+            url = 'https://repo.maven.apache.org/maven2'
+        }
     }
 }

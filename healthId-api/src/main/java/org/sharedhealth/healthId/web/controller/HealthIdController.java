@@ -36,7 +36,9 @@ public class HealthIdController extends BaseController {
     public static final String GENERATE_ALL_URI = "/generate";
     public static final String GENERATE_BLOCK_URI = "/generateBlock";
     public static final String GENERATE_BLOCK_FOR_ORG_URI = "/generateBlockForOrg";
+    public static final String GENERATE_BLOCK_URI_ID_TYPE = "/generateBlockWithId";
     private static final long HID_GENERATION_LIMIT = 2000000;
+
 
     private HealthIdService healthIdService;
     private FacilityService facilityService;
@@ -69,8 +71,9 @@ public class HealthIdController extends BaseController {
         if (isStartInvalidForMCI(start)) {
             throw new InvalidRequestException(String.format("%s not for MCI", start));
         }
-        UserInfo userInfo = getUserInfo();
-        logAccessDetails(userInfo, "Generating new hids");
+       // UserInfo userInfo = getUserInfo();
+        //logAccessDetails(userInfo, "Generating new hids");
+        UserInfo userInfo = new UserInfo("1","test","teset@gmail.com",1,true,"adfasd",new ArrayList<>(), new ArrayList<>());
         GeneratedHIDBlock generatedHIDBlock = healthIdService.generateBlock(start, totalHIDs, userInfo);
         return getResult(generatedHIDBlock, totalHIDs);
     }
@@ -101,7 +104,7 @@ public class HealthIdController extends BaseController {
         int defaultBlockSize = healthIdProperties.getHealthIdBlockSize();
         if (blockSize == null || blockSize <= 0 || blockSize > defaultBlockSize)
             blockSize = defaultBlockSize;
-        logAccessDetails(getUserInfo(), "Assigning next block to MCI");
+      //  logAccessDetails(getUserInfo(), "Assigning next block to MCI");
         List<MciHealthId> nextBlock = healthIdService.getNextBlock(mciCode, blockSize);
         HashMap<String, Object> responseMap = new HashMap<>();
         int totalHids = nextBlock.size();
@@ -180,6 +183,30 @@ public class HealthIdController extends BaseController {
         return deferredResult;
     }
 
+
+    @PreAuthorize("hasAnyRole('ROLE_SHR System Admin')")
+    @RequestMapping(method = POST, value = GENERATE_BLOCK_URI_ID_TYPE)
+    public DeferredResult<String> generateBlockWithIdentityType(@RequestParam(value = "id") String id,
+                                                        @RequestParam(value = "type") long type) {
+        /*if (isStartInvalidForMCI(start)) {
+            throw new InvalidRequestException(String.format("%s not for MCI", start));
+        }*/
+
+        UserInfo userInfo = getUserInfo();
+        logAccessDetails(userInfo, "Generating new hids");
+        GeneratedHIDBlock generatedHIDBlock = healthIdService.generateAllForSpecificIDType(userInfo, type, id);
+        final DeferredResult<String> deferredResult = new DeferredResult<>();
+        String message = String.format("Generated %s HIDs.", generatedHIDBlock.getTotalHIDs());
+        deferredResult.setResult(message);
+        logger.info(message);
+        // UserInfo userInfo = getUserInfo();
+        //logAccessDetails(userInfo, "Generating new hids");
+       // UserInfo userInfo = new UserInfo("1","test","teset@gmail.com",1,true,"adfasd",new ArrayList<>(), new ArrayList<>());
+        //GeneratedHIDBlock generatedHIDBlock = healthIdService.generateBlock(start, totalHIDs, userInfo);
+        //return getResult(generatedHIDBlock, totalHIDs);
+    return deferredResult;
+
+    }
 
     private <T> Action1<Throwable> errorCallback(final DeferredResult<T> deferredResult) {
         return new Action1<Throwable>() {

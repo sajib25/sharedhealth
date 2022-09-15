@@ -8,14 +8,15 @@ import javax.naming.AuthenticationException;
 public class ClientAuthenticator {
     public boolean authenticate(UserAuthInfo userAuthInfo, String token, UserInfo userInfo) throws AuthenticationException {
         String exceptionMessage = "User credentials is invalid";
-        if (isInactiveUser(userInfo)) {
+        //commenting sajib
+       /* if (isInactiveUser(userInfo)) {
             throw new AuthenticationException(exceptionMessage);
         } else if (isInvalidToken(userInfo, token))
             throw new AuthenticationException(exceptionMessage);
         else if (isInvalidClient(userInfo, userAuthInfo))
             throw new AuthenticationException(exceptionMessage);
         else if (isInvalidEmail(userInfo, userAuthInfo))
-            throw new AuthenticationException(exceptionMessage);
+            throw new AuthenticationException(exceptionMessage);*/
 
         return true;
     }

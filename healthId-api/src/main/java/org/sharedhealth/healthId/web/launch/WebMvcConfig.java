@@ -2,7 +2,7 @@ package org.sharedhealth.healthId.web.launch;
 
 import org.sharedhealth.healthId.web.config.ActuatorConfig;
 import org.sharedhealth.healthId.web.config.HealthIdConfig;
-import org.sharedhealth.healthId.web.config.HealthIdSecurityConfig;
+//import org.sharedhealth.healthId.web.config.HealthIdSecurityConfig;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -23,7 +23,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 @Configuration
-@Import({HealthIdConfig.class, HealthIdSecurityConfig.class, ActuatorConfig.class})
+@Import({HealthIdConfig.class,/* HealthIdSecurityConfig.class,*/ ActuatorConfig.class})
 @EnableWebMvc
 @EnableScheduling
 @ComponentScan(basePackages = {

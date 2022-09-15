@@ -41,8 +41,8 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
         logger.debug("Authenticating client with email : {}", email);
         try {
-            SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
-            processTokenAuthentication(clientId, email, token);
+            //SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
+           // processTokenAuthentication(clientId, email, token);
             filterChain.doFilter(httpRequest, httpResponse);
         } catch (AuthenticationException ex) {
             logger.debug("Access to client with email={} is denied.", email);

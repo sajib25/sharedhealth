@@ -15,7 +15,9 @@ public class TokenAuthentication implements Authentication {
 
     public TokenAuthentication(UserInfo userInfo, boolean isAuthenticated) {
         this.userInfo = userInfo;
-        this.isAuthenticated = isAuthenticated;
+       //commenting sajib
+        // this.isAuthenticated = isAuthenticated;
+        this.isAuthenticated = true;
         this.groups = getUserGroups(userInfo);
     }
 

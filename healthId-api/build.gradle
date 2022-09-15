@@ -9,7 +9,10 @@ mainClassName = "org.sharedhealth.healthId.web.launch.Main"
 
 repositories {
     maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-    mavenCentral()
+   // mavenCentral()
+    maven {
+        url = 'https://repo.maven.apache.org/maven2'
+    }
     flatDir {
         dirs "${rootDir}/lib"
     }
@@ -171,7 +174,10 @@ task debugHealthId(type: JavaExec) {
 
 buildscript {
     repositories {
-        mavenCentral()
+       // mavenCentral()
+        maven {
+            url = 'https://repo.maven.apache.org/maven2'
+        }
         maven { url "http://repo.spring.io/snapshot" }
         maven { url "http://repo.spring.io/milestone" }
         maven { url "https://plugins.gradle.org/m2/" }

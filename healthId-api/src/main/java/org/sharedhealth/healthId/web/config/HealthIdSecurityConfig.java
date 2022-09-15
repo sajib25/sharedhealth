@@ -30,18 +30,18 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.ArrayList;
 
-@Configuration
-@EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true)
-public class HealthIdSecurityConfig extends WebSecurityConfigurerAdapter {
-    private static final Logger logger = LoggerFactory.getLogger(HealthIdSecurityConfig.class);
+//@Configuration
+//@EnableWebSecurity
+//@EnableGlobalMethodSecurity(prePostEnabled = true)
+//public class HealthIdSecurityConfig extends WebSecurityConfigurerAdapter {
+    /*private static final Logger logger = LoggerFactory.getLogger(HealthIdSecurityConfig.class);
 
     @Autowired
     TokenAuthenticationProvider tokenAuthenticationProvider;
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
+        *//*http
                 .csrf().disable()
                 .anonymous().disable()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
@@ -59,7 +59,9 @@ public class HealthIdSecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticated()
                 .and()
                 .addFilterBefore(new TokenAuthenticationFilter(authenticationManager()), LogoutFilter.class)
-                .exceptionHandling().accessDeniedHandler(unauthorizedEntryPoint()).authenticationEntryPoint(unauthenticatedEntryPoint());
+                .exceptionHandling().accessDeniedHandler(unauthorizedEntryPoint()).authenticationEntryPoint(unauthenticatedEntryPoint());*//*
+
+        http.authorizeRequests().anyRequest().permitAll();
     }
 
     @Bean
@@ -96,3 +98,4 @@ public class HealthIdSecurityConfig extends WebSecurityConfigurerAdapter {
     }
 }
 
+*/

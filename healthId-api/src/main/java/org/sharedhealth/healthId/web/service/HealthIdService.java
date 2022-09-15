@@ -66,6 +66,18 @@ public class HealthIdService {
         return saveGeneratedBlock(start, end, numberOfValidHIDs, healthIdProperties.getMciOrgCode(), userInfo, timeBased());
     }
 
+    public GeneratedHIDBlock generateAllForSpecificIDType(UserInfo userInfo,long type, String id) {
+        Long start = healthIdProperties.getMciStartHid();
+        Long end = healthIdProperties.getMciEndHid();
+        long numberOfValidHIDs = 0L;
+        String newHealthId = type + id;
+        if(healthIdRepository.findOrgHealthId(newHealthId).toBlocking().first() == null){
+            saveIfValidMciHIDSpecificIdType(newHealthId);
+        }
+
+        return saveGeneratedBlock(start, end, numberOfValidHIDs, healthIdProperties.getMciOrgCode(), userInfo, timeBased());
+    }
+
     public GeneratedHIDBlock generateBlock(long start, long totalHIDs, UserInfo userInfo) {
         long numberOfValidHIDs = 0L;
         long seriesNo = identifySeriesNo(start);
@@ -146,6 +158,18 @@ public class HealthIdService {
         }
         return numberOfValidHids;
     }
+
+    private long saveIfValidMciHIDSpecificIdType(String currentNumber) {
+        long numberOfValidHids = 0;
+        String possibleHid = currentNumber;
+        if (!mciInvalidHidPattern.matcher(possibleHid).find()) {
+            numberOfValidHids += 1;
+          //  String newHealthId = possibleHid + checksumGenerator.generate(possibleHid.substring(1));
+            healthIdRepository.saveMciHealthId(new MciHealthId(possibleHid));
+        }
+        return numberOfValidHids;
+    }
+
 
     private long saveIfValidOrgHID(String orgCode, long numberOfValidHIDs, File hidFile, long possibleHID, UUID generatedAt) {
         String possibleHid = String.valueOf(possibleHID);

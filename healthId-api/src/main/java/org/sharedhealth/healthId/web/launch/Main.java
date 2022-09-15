@@ -41,7 +41,9 @@ public class Main {
             }
         });
 
-        factory.setPort(valueOf(env.get(HEALTH_ID_SERVICE_PORT)));
+       /* factory.setPort(valueOf(env.get(HEALTH_ID_SERVICE_PORT)));*/
+        factory.setPort(9082);
+
         return factory;
     }
 
